@@ -1,0 +1,342 @@
+
+import React, { useState } from "react";
+import { businessService } from "@/api/services/businessService";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import {
+  Search,
+  Filter,
+  MapPin,
+  Award,
+  Star,
+  TrendingUp,
+  Eye,
+  ArrowRight,
+  Verified
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { motion } from "framer-motion";
+
+export default function Marketplace() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIndustry, setSelectedIndustry] = useState("all");
+  const [sortBy, setSortBy] = useState("-engagement_score");
+
+  const { data: businesses = [], isLoading } = useQuery({
+    queryKey: ['businesses-all', sortBy],
+    queryFn: () => businessService.list(sortBy),
+    initialData: [],
+  });
+
+  const industries = [
+    "All Industries",
+    "Technology",
+    "Manufacturing",
+    "Retail",
+    "Healthcare",
+    "Finance",
+    "Logistics",
+    "Construction",
+    "Food & Beverage",
+    "Professional Services",
+    "Education"
+  ];
+
+  const filteredBusinesses = businesses.filter((business) => {
+    const matchesSearch = business.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          business.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesIndustry = selectedIndustry === "all" || business.industry === selectedIndustry;
+    return matchesSearch && matchesIndustry;
+  });
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4 }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FC]">
+      {/* Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-gradient-to-r from-[#241C3A] via-[#3C2F63] to-[#241C3A] text-white py-12"
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-4xl font-bold mb-3"
+          >
+            Business Marketplace
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="text-xl text-white/90"
+          >
+            Discover verified SMBs ready to partner with you
+          </motion.p>
+        </div>
+      </motion.div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Search & Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <Card className="mb-8 border-[#E4E7EB] shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="md:col-span-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-5 h-5" />
+                    <Input
+                      type="text"
+                      placeholder="Search businesses, services, locations..."
+                      className="pl-10 h-12 border-[#E4E7EB]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
+                  <SelectTrigger className="h-12 border-[#E4E7EB]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Industries</SelectItem>
+                    {industries.slice(1).map((industry) => (
+                      <SelectItem key={industry} value={industry}>
+                        {industry}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="h-12 border-[#E4E7EB]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="-engagement_score">Most Active</SelectItem>
+                    <SelectItem value="-trust_score">Highest Rated</SelectItem>
+                    <SelectItem value="-profile_views">Most Viewed</SelectItem>
+                    <SelectItem value="-created_date">Newest</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Results Info */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="flex items-center justify-between mb-6"
+        >
+          <p className="text-[#7C7C7C]">
+            <span className="font-semibold text-[#1E1E1E]">{filteredBusinesses.length}</span> businesses found
+          </p>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20">
+              <Verified className="w-3 h-3 mr-1" />
+              Verified businesses get 3x more leads
+            </Badge>
+          </div>
+        </motion.div>
+
+        {/* Business Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card className="animate-pulse border-[#E4E7EB]">
+                  <CardHeader>
+                    <div className="h-16 bg-gray-200 rounded-lg mb-4" />
+                    <div className="h-6 bg-gray-200 rounded w-3/4" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-20 bg-gray-200 rounded" />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        ) : filteredBusinesses.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="text-center py-12 border-[#E4E7EB]">
+              <CardContent>
+                <Search className="w-16 h-16 text-[#7C7C7C]/30 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-[#1E1E1E] mb-2">No businesses found</h3>
+                <p className="text-[#7C7C7C] mb-6">Try adjusting your search or filters</p>
+                <Button 
+                  onClick={() => { setSearchTerm(""); setSelectedIndustry("all"); }}
+                  className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                >
+                  Clear Filters
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {filteredBusinesses.map((business) => (
+              <motion.div
+                key={business.id}
+                variants={cardVariants}
+                whileHover={{ scale: 1.03, y: -8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="hover:shadow-2xl transition-all duration-300 border-[#E4E7EB] shadow-lg group relative overflow-hidden cursor-pointer">
+                  {business.is_boosted && (
+                    <motion.div 
+                      initial={{ x: 100 }}
+                      animate={{ x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="absolute top-0 right-0 bg-gradient-to-r from-[#6C4DE6] to-[#7E57C2] text-white text-xs font-bold px-3 py-1 rounded-bl-lg"
+                    >
+                      <TrendingUp className="w-3 h-3 inline mr-1" />
+                      Boosted
+                    </motion.div>
+                  )}
+                  
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-3 mb-3">
+                      <motion.div 
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.6 }}
+                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-2xl shadow-lg"
+                      >
+                        {business.business_name?.[0]?.toUpperCase() || 'B'}
+                      </motion.div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg group-hover:text-[#6C4DE6] transition-colors duration-300 mb-1">
+                          {business.business_name}
+                        </CardTitle>
+                        <p className="text-sm text-[#7C7C7C]">{business.industry}</p>
+                      </div>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      {business.is_verified && (
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                          <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20 text-xs">
+                            <Award className="w-3 h-3 mr-1" />
+                            Verified
+                          </Badge>
+                        </motion.div>
+                      )}
+                      {business.verified_badges?.slice(0, 2).map((badge, idx) => (
+                        <motion.div key={idx} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                          <Badge variant="outline" className="text-xs border-[#E4E7EB] text-[#7C7C7C]">
+                            {badge}
+                          </Badge>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-[#7C7C7C] text-sm mb-4 line-clamp-3">
+                      {business.description || business.tagline || "Explore this business profile"}
+                    </p>
+
+                    {/* Location */}
+                    <div className="flex items-center gap-2 text-sm text-[#7C7C7C] mb-4">
+                      <MapPin className="w-4 h-4 text-[#318FFD]" />
+                      <span>
+                        {business.location?.city}, {business.location?.state}
+                      </span>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-[#F8F9FC] rounded-lg border border-[#E4E7EB]">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
+                          <Star className="w-4 h-4 fill-current" />
+                          <span className="text-sm font-bold">{business.trust_score || 0}</span>
+                        </div>
+                        <p className="text-xs text-[#7C7C7C]">Trust</p>
+                      </div>
+                      <div className="text-center border-x border-[#E4E7EB]">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Eye className="w-4 h-4 text-[#318FFD]" />
+                          <span className="text-sm font-bold text-[#1E1E1E]">{business.profile_views || 0}</span>
+                        </div>
+                        <p className="text-xs text-[#7C7C7C]">Views</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-bold text-[#1E1E1E] mb-1">
+                          {business.engagement_score || 0}
+                        </div>
+                        <p className="text-xs text-[#7C7C7C]">Score</p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Button asChild className="w-full bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300 shadow-md hover:shadow-lg">
+                        <Link to={createPageUrl("BusinessDetails") + `?id=${business.id}`}>
+                          View Profile
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}

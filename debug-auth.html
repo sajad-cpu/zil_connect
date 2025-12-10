@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth Token</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .info { margin: 10px 0; padding: 10px; background: #2a2a2a; }
+        .label { color: #ffaa00; font-weight: bold; }
+        .value { color: #00ffaa; }
+        button { 
+            padding: 10px 20px;
+            margin: 10px 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Auth Token Debug</h1>
+    
+    <div class="info">
+        <div class="label">Auth Token:</div>
+        <div class="value" id="token">Checking...</div>
+    </div>
+    
+    <div class="info">
+        <div class="label">User Data:</div>
+        <div class="value" id="userData">Checking...</div>
+    </div>
+    
+    <div class="info">
+        <div class="label">User ID:</div>
+        <div class="value" id="userId">Checking...</div>
+    </div>
+    
+    <div class="info">
+        <div class="label">Is Authenticated:</div>
+        <div class="value" id="isAuth">Checking...</div>
+    </div>
+
+    <button onclick="testAPI()">Test API Call</button>
+    <button onclick="clearAuth()">Clear Auth</button>
+    <button onclick="location.reload()">Refresh</button>
+
+    <div class="info">
+        <div class="label">API Test Result:</div>
+        <div class="value" id="apiResult">Click "Test API Call" button</div>
+    </div>
+
+    <script>
+        // Check localStorage
+        document.getElementById('token').textContent = localStorage.getItem('zil_auth_token') || 'NOT FOUND';
+        document.getElementById('userData').textContent = localStorage.getItem('zil_user_data') || 'NOT FOUND';
+        document.getElementById('userId').textContent = localStorage.getItem('zil_user_id') || 'NOT FOUND';
+        document.getElementById('isAuth').textContent = localStorage.getItem('zil_is_authenticated') || 'NOT FOUND';
+
+        async function testAPI() {
+            const token = localStorage.getItem('zil_auth_token');
+            
+            if (!token) {
+                document.getElementById('apiResult').textContent = 'ERROR: No auth token found!';
+                return;
+            }
+
+            document.getElementById('apiResult').textContent = 'Testing...';
+
+            try {
+                const response = await fetch('http://127.0.0.1:8090/api/collections/opportunities/records?page=1&perPage=10', {
+                    headers: {
+                        'Authorization': token
+                    }
+                });
+
+                const data = await response.json();
+                document.getElementById('apiResult').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('apiResult').textContent = 'ERROR: ' + error.message;
+            }
+        }
+
+        function clearAuth() {
+            localStorage.clear();
+            alert('Auth cleared! Reloading...');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
