@@ -3,7 +3,7 @@
 services:
   # PocketBase Backend
   - type: web
-    name: business-connection-pocketbase
+    name: zil-connect-pocketbase
     runtime: docker
     dockerfilePath: ./Dockerfile.pocketbase
     disk:
@@ -16,10 +16,10 @@ services:
 
   # React Frontend
   - type: web
-    name: business-connection-frontend
+    name: zil-connect-frontend
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: npm run preview
     envVars:
       - key: VITE_POCKETBASE_URL
-        value: https://business-connection-pocketbase.onrender.com
+        value: https://zil-connect-pocketbase.onrender.com
