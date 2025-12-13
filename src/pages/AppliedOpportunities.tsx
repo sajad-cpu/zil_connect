@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useQuery } from "@tanstack/react-query";
+import { applicationService } from "@/api/services/applicationService";
 import {
   Briefcase,
   ArrowLeft,
@@ -17,53 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function AppliedOpportunities() {
-  // Mock applied opportunities data
-  const appliedOpportunities = [
-    {
-      id: 1,
-      title: "Enterprise Software Development Project",
-      business_name: "Tech Solutions Inc",
-      type: "Project",
-      budget: "$50,000 - $75,000",
-      location: "New York, NY",
-      dateApplied: "2024-01-15",
-      status: "Pending",
-      deadline: "2024-02-28"
-    },
-    {
-      id: 2,
-      title: "Strategic Partnership for Market Expansion",
-      business_name: "Global Trading Co",
-      type: "Partnership",
-      budget: "Negotiable",
-      location: "Remote",
-      dateApplied: "2024-01-10",
-      status: "Accepted",
-      deadline: "2024-03-15"
-    },
-    {
-      id: 3,
-      title: "Supply Chain Management RFP",
-      business_name: "Manufacturing Corp",
-      type: "RFP",
-      budget: "$100,000+",
-      location: "Chicago, IL",
-      dateApplied: "2024-01-05",
-      status: "Rejected",
-      deadline: "2024-02-01"
-    },
-    {
-      id: 4,
-      title: "Digital Marketing Campaign",
-      business_name: "Retail Solutions",
-      type: "Project",
-      budget: "$30,000 - $40,000",
-      location: "Los Angeles, CA",
-      dateApplied: "2024-01-20",
-      status: "Pending",
-      deadline: "2024-03-01"
-    },
-  ];
+  // Fetch real applied opportunities from API
+  const { data: applications = [], isLoading } = useQuery({
+    queryKey: ['my-applications'],
+    queryFn: () => applicationService.getMyApplications('-created'),
+  });
 
   const getStatusConfig = (status) => {
     const configs = {
@@ -128,7 +88,7 @@ export default function AppliedOpportunities() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[#7C7C7C] text-sm mb-1">Total Applications</p>
-                  <p className="text-3xl font-bold text-[#1E1E1E]">{appliedOpportunities.length}</p>
+                  <p className="text-3xl font-bold text-[#1E1E1E]">{applications.length}</p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-[#6C4DE6]/10 flex items-center justify-center">
                   <Briefcase className="w-6 h-6 text-[#6C4DE6]" />
@@ -143,7 +103,7 @@ export default function AppliedOpportunities() {
                 <div>
                   <p className="text-[#7C7C7C] text-sm mb-1">Accepted</p>
                   <p className="text-3xl font-bold text-[#08B150]">
-                    {appliedOpportunities.filter(o => o.status === "Accepted").length}
+                    {applications.filter((o: any) => o.status === "Accepted").length}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-[#08B150]/10 flex items-center justify-center">
@@ -159,7 +119,7 @@ export default function AppliedOpportunities() {
                 <div>
                   <p className="text-[#7C7C7C] text-sm mb-1">Pending Review</p>
                   <p className="text-3xl font-bold text-[#318FFD]">
-                    {appliedOpportunities.filter(o => o.status === "Pending").length}
+                    {applications.filter((o: any) => o.status === "Pending").length}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-[#318FFD]/10 flex items-center justify-center">
@@ -171,7 +131,12 @@ export default function AppliedOpportunities() {
         </div>
 
         {/* Applications List */}
-        {appliedOpportunities.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-[#7C7C7C]">Loading your applications...</p>
+          </div>
+        ) : applications.length === 0 ? (
           <Card className="text-center py-16 border-[#E4E7EB]">
             <CardContent>
               <Briefcase className="w-20 h-20 text-[#7C7C7C]/30 mx-auto mb-6" />
@@ -188,7 +153,8 @@ export default function AppliedOpportunities() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {appliedOpportunities.map((app) => {
+            {applications.map((app: any) => {
+              const opportunity = app.expand?.opportunity;
               const statusConfig = getStatusConfig(app.status);
               const StatusIcon = statusConfig.icon;
 
@@ -209,16 +175,16 @@ export default function AppliedOpportunities() {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex gap-2 mb-2">
-                              <Badge className={getTypeColor(app.type)}>
-                                {app.type}
+                              <Badge className={getTypeColor(opportunity?.type)}>
+                                {opportunity?.type || "N/A"}
                               </Badge>
                               <Badge className={statusConfig.color}>
                                 <StatusIcon className="w-3 h-3 mr-1" />
                                 {statusConfig.label}
                               </Badge>
                             </div>
-                            <h3 className="text-xl font-bold text-[#1E1E1E] mb-1">{app.title}</h3>
-                            <p className="text-[#7C7C7C]">{app.business_name}</p>
+                            <h3 className="text-xl font-bold text-[#1E1E1E] mb-1">{opportunity?.title || "Untitled"}</h3>
+                            <p className="text-[#7C7C7C]">{opportunity?.company_name || app.company_name}</p>
                           </div>
                         </div>
 
@@ -226,19 +192,19 @@ export default function AppliedOpportunities() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                           <div className="flex items-center gap-2 text-sm">
                             <DollarSign className="w-4 h-4 text-[#318FFD]" />
-                            <span className="text-[#7C7C7C]">{app.budget}</span>
+                            <span className="text-[#7C7C7C]">{opportunity?.budget || "N/A"}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <MapPin className="w-4 h-4 text-[#318FFD]" />
-                            <span className="text-[#7C7C7C] truncate">{app.location}</span>
+                            <span className="text-[#7C7C7C] truncate">{opportunity?.location || "N/A"}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 text-[#318FFD]" />
-                            <span className="text-[#7C7C7C]">Applied: {formatDate(app.dateApplied)}</span>
+                            <span className="text-[#7C7C7C]">Applied: {formatDate(app.created)}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Clock className="w-4 h-4 text-[#318FFD]" />
-                            <span className="text-[#7C7C7C]">Deadline: {formatDate(app.deadline)}</span>
+                            <span className="text-[#7C7C7C]">Deadline: {formatDate(opportunity?.deadline)}</span>
                           </div>
                         </div>
 

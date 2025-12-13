@@ -235,7 +235,7 @@ export default function Home() {
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10 transition-all duration-300">
+                <Button size="lg" asChild className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 border border-white/30">
                   <Link to={createPageUrl("Opportunities")}>
                     View Opportunities
                   </Link>

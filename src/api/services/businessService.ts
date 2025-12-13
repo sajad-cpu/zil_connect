@@ -111,5 +111,39 @@ export const businessService = {
       console.error('Error searching businesses:', error);
       return [];
     }
+  },
+
+  /**
+   * Get current user's business
+   */
+  async getMyBusiness() {
+    try {
+      const userId = pb.authStore.model?.id;
+      if (!userId) {
+        console.warn('getMyBusiness: No user ID found');
+        return null;
+      }
+
+      console.log('Fetching business for user:', userId);
+
+      const records = await pb.collection('businesses').getList(1, 1, {
+        filter: `owner="${userId}"`,
+        expand: 'owner',
+        $autoCancel: false
+      });
+
+      console.log('Business records found:', records.items.length);
+
+      if (records.items.length > 0) {
+        console.log('Business found:', records.items[0].id);
+        return records.items[0];
+      }
+
+      console.log('No business found for user');
+      return null;
+    } catch (error: any) {
+      console.error('Error fetching my business:', error);
+      return null;
+    }
   }
 };

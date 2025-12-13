@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { businessService } from "@/api/services/businessService";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { connectionService } from "@/api/services/connectionService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
+import { pb } from "@/api/pocketbaseClient";
 import {
   Building2,
   MapPin,
@@ -16,7 +19,10 @@ import {
   CheckCircle,
   ArrowLeft,
   MessageSquare,
-  UserPlus
+  UserPlus,
+  UserCheck,
+  Loader2,
+  Clock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +30,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function BusinessDetails() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const businessId = urlParams.get("id");
+  const currentUserId = pb.authStore.model?.id;
 
   const { data: business, isLoading } = useQuery({
     queryKey: ['business-details', businessId],
@@ -34,6 +43,34 @@ export default function BusinessDetails() {
       return await businessService.getById(businessId);
     },
     initialData: null,
+  });
+
+  // Get connection status with this business owner
+  const { data: connectionStatus } = useQuery({
+    queryKey: ['connection-status', business?.owner],
+    queryFn: () => business?.owner ? connectionService.getConnectionStatus(business.owner) : null,
+    enabled: !!business?.owner && business.owner !== currentUserId,
+  });
+
+  // Send connection request mutation
+  const sendConnectionMutation = useMutation({
+    mutationFn: () => {
+      if (!business?.owner || !businessId) {
+        throw new Error('Invalid business data');
+      }
+      return connectionService.sendRequest({
+        user_to: business.owner,
+        business_to: businessId,
+        message: `I'd like to connect with ${business.business_name}`
+      });
+    },
+    onSuccess: () => {
+      toast.success("Connection request sent!");
+      queryClient.invalidateQueries({ queryKey: ['connection-status', business?.owner] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to send connection request");
+    }
   });
 
   if (isLoading || !business) {
@@ -102,14 +139,86 @@ export default function BusinessDetails() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white">
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Connect
-                    </Button>
-                    <Button variant="outline" className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC]">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Message
-                    </Button>
+                    {/* Show different buttons based on connection status */}
+                    {business.owner === currentUserId ? (
+                      // Own business - show edit button
+                      <Button
+                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                        onClick={() => navigate(createPageUrl("Profile"))}
+                      >
+                        Edit Profile
+                      </Button>
+                    ) : !connectionStatus ? (
+                      // No connection - show loading or connect button
+                      <Button
+                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                        onClick={() => sendConnectionMutation.mutate()}
+                        disabled={sendConnectionMutation.isPending}
+                      >
+                        {sendConnectionMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Connect
+                          </>
+                        )}
+                      </Button>
+                    ) : connectionStatus.status === 'none' ? (
+                      // No connection exists
+                      <Button
+                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                        onClick={() => sendConnectionMutation.mutate()}
+                        disabled={sendConnectionMutation.isPending}
+                      >
+                        {sendConnectionMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Connect
+                          </>
+                        )}
+                      </Button>
+                    ) : connectionStatus.status === 'pending' ? (
+                      // Connection request pending
+                      <Button
+                        variant="outline"
+                        className="border-amber-300 text-amber-700 bg-amber-50"
+                        disabled
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        {connectionStatus.isSender ? 'Request Sent' : 'Pending'}
+                      </Button>
+                    ) : connectionStatus.status === 'accepted' ? (
+                      // Already connected
+                      <Button
+                        variant="outline"
+                        className="border-green-300 text-green-700 bg-green-50"
+                        disabled
+                      >
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        Connected
+                      </Button>
+                    ) : null}
+
+                    {/* Message button - only show if connected */}
+                    {connectionStatus?.status === 'accepted' && connectionStatus.connection && (
+                      <Button
+                        variant="outline"
+                        className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC]"
+                        onClick={() => navigate(createPageUrl("Connected") + `?connection=${connectionStatus.connection?.id}`)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Message
+                      </Button>
+                    )}
                   </div>
                 </div>
 

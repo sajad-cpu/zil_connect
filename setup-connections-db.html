@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PocketBase Connection Feature - Database Setup Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #6C4DE6 0%, #4834A8 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .collection {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .collection h2 {
+            color: #6C4DE6;
+            margin-top: 0;
+            border-bottom: 2px solid #6C4DE6;
+            padding-bottom: 10px;
+        }
+        .field {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #6C4DE6;
+            border-radius: 4px;
+        }
+        .field-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        .field-details {
+            color: #666;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        .required {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .step {
+            background: #e8f4fd;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        .api-rule {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+        code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .warning {
+            background: #ffe6e6;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .index-info {
+            background: #e8f5e9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔗 Connection Feature - Database Setup Guide</h1>
+        <p>Follow these steps to create the 3 new collections for the LinkedIn-style connection system</p>
+    </div>
+
+    <div class="warning">
+        <strong>⚠️ Prerequisites:</strong>
+        <ul>
+            <li>PocketBase admin UI should be running (usually at <code>http://127.0.0.1:8090/_/</code>)</li>
+            <li>You should be logged in as admin</li>
+            <li>Make sure <code>users</code> and <code>businesses</code> collections already exist</li>
+        </ul>
+    </div>
+
+    <!-- COLLECTION 1: CONNECTIONS -->
+    <div class="collection">
+        <h2>📋 Collection 1: connections</h2>
+
+        <div class="step">
+            <strong>Step 1:</strong> Go to PocketBase Admin → Collections → Click "New Collection"<br>
+            <strong>Step 2:</strong> Name: <code>connections</code><br>
+            <strong>Step 3:</strong> Type: Base Collection<br>
+            <strong>Step 4:</strong> Add the following fields:
+        </div>
+
+        <div class="field">
+            <div class="field-name">user_from <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> users<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> User who sent the connection request
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">user_to <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> users<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> User who received the connection request
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">business_from <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> businesses<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> Business profile of user_from
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">business_to <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> businesses<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> Business profile of user_to
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">status <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Select (single)<br>
+                <strong>Options:</strong> <code>pending</code>, <code>accepted</code>, <code>rejected</code>, <code>blocked</code><br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Default:</strong> pending<br>
+                <strong>Description:</strong> Current status of the connection
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">message</div>
+            <div class="field-details">
+                <strong>Type:</strong> Text (Long text/Editor)<br>
+                <strong>Required:</strong> No<br>
+                <strong>Max length:</strong> 500<br>
+                <strong>Description:</strong> Optional message when sending connection request
+            </div>
+        </div>
+
+        <div class="index-info">
+            <strong>🔍 Indexes to Create (in API Rules tab):</strong><br>
+            Create a unique index on <code>user_from</code> + <code>user_to</code> to prevent duplicate connection requests
+        </div>
+
+        <div class="api-rule">
+            <strong>🔒 API Rules:</strong><br>
+            <strong>List/Search:</strong> <code>@request.auth.id != "" && (user_from = @request.auth.id || user_to = @request.auth.id)</code><br>
+            <strong>View:</strong> <code>@request.auth.id != "" && (user_from = @request.auth.id || user_to = @request.auth.id)</code><br>
+            <strong>Create:</strong> <code>@request.auth.id != "" && @request.auth.id = @request.data.user_from</code><br>
+            <strong>Update:</strong> <code>@request.auth.id != "" && user_to = @request.auth.id</code><br>
+            <strong>Delete:</strong> <code>@request.auth.id != "" && user_from = @request.auth.id</code>
+        </div>
+    </div>
+
+    <!-- COLLECTION 2: MESSAGES -->
+    <div class="collection">
+        <h2>💬 Collection 2: messages</h2>
+
+        <div class="step">
+            <strong>Step 1:</strong> Go to PocketBase Admin → Collections → Click "New Collection"<br>
+            <strong>Step 2:</strong> Name: <code>messages</code><br>
+            <strong>Step 3:</strong> Type: Base Collection<br>
+            <strong>Step 4:</strong> Add the following fields:
+        </div>
+
+        <div class="field">
+            <div class="field-name">connection_id <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> connections<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Cascade delete:</strong> Yes (when connection deleted, delete all messages)<br>
+                <strong>Description:</strong> Which connection this message belongs to
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">sender_id <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> users<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> User who sent the message
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">receiver_id <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> users<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> User who received the message
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">text <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Text (Long text/Editor)<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Max length:</strong> 5000<br>
+                <strong>Description:</strong> Message content
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">read</div>
+            <div class="field-details">
+                <strong>Type:</strong> Bool<br>
+                <strong>Required:</strong> No<br>
+                <strong>Default:</strong> false<br>
+                <strong>Description:</strong> Whether message has been read
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">attachment_url</div>
+            <div class="field-details">
+                <strong>Type:</strong> URL<br>
+                <strong>Required:</strong> No<br>
+                <strong>Description:</strong> Optional file/image attachment URL
+            </div>
+        </div>
+
+        <div class="index-info">
+            <strong>🔍 Indexes to Create:</strong><br>
+            Index on <code>connection_id</code> + <code>created</code> for fast message retrieval
+        </div>
+
+        <div class="api-rule">
+            <strong>🔒 API Rules:</strong><br>
+            <strong>List/Search:</strong> <code>@request.auth.id != "" && (sender_id = @request.auth.id || receiver_id = @request.auth.id)</code><br>
+            <strong>View:</strong> <code>@request.auth.id != "" && (sender_id = @request.auth.id || receiver_id = @request.auth.id)</code><br>
+            <strong>Create:</strong> <code>@request.auth.id != "" && @request.auth.id = @request.data.sender_id</code><br>
+            <strong>Update:</strong> <code>@request.auth.id != "" && receiver_id = @request.auth.id</code> (only for marking as read)<br>
+            <strong>Delete:</strong> <code>@request.auth.id != "" && sender_id = @request.auth.id</code>
+        </div>
+    </div>
+
+    <!-- COLLECTION 3: NOTIFICATIONS -->
+    <div class="collection">
+        <h2>🔔 Collection 3: notifications</h2>
+
+        <div class="step">
+            <strong>Step 1:</strong> Go to PocketBase Admin → Collections → Click "New Collection"<br>
+            <strong>Step 2:</strong> Name: <code>notifications</code><br>
+            <strong>Step 3:</strong> Type: Base Collection<br>
+            <strong>Step 4:</strong> Add the following fields:
+        </div>
+
+        <div class="field">
+            <div class="field-name">user <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Relation<br>
+                <strong>Collection:</strong> users<br>
+                <strong>Max select:</strong> 1<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> User who receives this notification
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">type <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Select (single)<br>
+                <strong>Options:</strong> <code>connection_request</code>, <code>connection_accepted</code>, <code>new_message</code>, <code>system</code><br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Description:</strong> Type of notification
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">message <span class="required">*</span></div>
+            <div class="field-details">
+                <strong>Type:</strong> Text (Plain text)<br>
+                <strong>Required:</strong> Yes<br>
+                <strong>Max length:</strong> 500<br>
+                <strong>Description:</strong> Notification message text
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">related_id</div>
+            <div class="field-details">
+                <strong>Type:</strong> Text (Plain text)<br>
+                <strong>Required:</strong> No<br>
+                <strong>Description:</strong> ID of related record (connection, message, etc.)<br>
+                <strong>Note:</strong> Not a relation field to allow flexibility
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-name">is_read</div>
+            <div class="field-details">
+                <strong>Type:</strong> Bool<br>
+                <strong>Required:</strong> No<br>
+                <strong>Default:</strong> false<br>
+                <strong>Description:</strong> Whether notification has been read
+            </div>
+        </div>
+
+        <div class="index-info">
+            <strong>🔍 Indexes to Create:</strong><br>
+            Index on <code>user</code> + <code>is_read</code> + <code>created</code> for fast unread notification queries
+        </div>
+
+        <div class="api-rule">
+            <strong>🔒 API Rules:</strong><br>
+            <strong>List/Search:</strong> <code>@request.auth.id != "" && user = @request.auth.id</code><br>
+            <strong>View:</strong> <code>@request.auth.id != "" && user = @request.auth.id</code><br>
+            <strong>Create:</strong> Empty (only backend can create)<br>
+            <strong>Update:</strong> <code>@request.auth.id != "" && user = @request.auth.id</code> (only for marking as read)<br>
+            <strong>Delete:</strong> <code>@request.auth.id != "" && user = @request.auth.id</code>
+        </div>
+    </div>
+
+    <!-- VERIFICATION CHECKLIST -->
+    <div class="success">
+        <h3>✅ Verification Checklist</h3>
+        <p>After creating all 3 collections, verify:</p>
+        <ul>
+            <li>All required fields are marked as required</li>
+            <li>All relation fields point to correct collections</li>
+            <li>Select fields have all options defined</li>
+            <li>Default values are set (status=pending, read=false, is_read=false)</li>
+            <li>API rules are configured for each collection</li>
+            <li>Unique index on connections (user_from + user_to)</li>
+            <li>Cascade delete on messages → connection_id</li>
+        </ul>
+    </div>
+
+    <!-- QUICK REFERENCE -->
+    <div class="collection">
+        <h2>📚 Quick Reference</h2>
+
+        <h3>Collection Names:</h3>
+        <ul>
+            <li><code>connections</code> - 6 fields (user_from, user_to, business_from, business_to, status, message)</li>
+            <li><code>messages</code> - 6 fields (connection_id, sender_id, receiver_id, text, read, attachment_url)</li>
+            <li><code>notifications</code> - 5 fields (user, type, message, related_id, is_read)</li>
+        </ul>
+
+        <h3>Next Steps After DB Setup:</h3>
+        <ol>
+            <li>Create service files (connectionService.ts, messageService.ts, notificationService.ts)</li>
+            <li>Wire up Invitations page to show connection requests</li>
+            <li>Wire up Connected page (Messages) for messaging</li>
+            <li>Add connection buttons to BusinessDetails and Search pages</li>
+            <li>Update Layout header with notification badges</li>
+        </ol>
+    </div>
+
+    <div class="warning">
+        <strong>💡 Pro Tips:</strong>
+        <ul>
+            <li>Use PocketBase's "Import collections" feature if you want to backup/restore later</li>
+            <li>Test API rules by trying to create records from the admin UI</li>
+            <li>Make sure cascade delete is enabled on messages → connection_id to prevent orphaned messages</li>
+            <li>The unique index on connections prevents users from sending duplicate requests</li>
+        </ul>
+    </div>
+</body>
+</html>

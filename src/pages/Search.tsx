@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { businessService } from "@/api/services/businessService";
-import { useQuery } from "@tanstack/react-query";
+import { connectionService } from "@/api/services/connectionService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
+import { pb } from "@/api/pocketbaseClient";
 import {
   Search as SearchIcon,
   Sparkles,
@@ -13,7 +16,9 @@ import {
   Award,
   Filter,
   UserPlus,
-  Check
+  Check,
+  Loader2,
+  Clock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,16 +27,15 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function Search() {
+  const queryClient = useQueryClient();
+  const currentUserId = pb.authStore.model?.id;
   const [searchQuery, setSearchQuery] = useState("");
   const [aiMatchmaking, setAiMatchmaking] = useState(false);
-  const [selectedIndustries, setSelectedIndustries] = useState([]);
-  const [selectedBadges, setSelectedBadges] = useState([]);
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const [trustScoreRange, setTrustScoreRange] = useState([0, 100]);
-  const [connectedBusinesses, setConnectedBusinesses] = useState([]);
-  const { toast } = useToast();
 
   const { data: businesses = [] } = useQuery({
     queryKey: ['businesses-search'],
@@ -39,39 +43,93 @@ export default function Search() {
     initialData: [],
   });
 
+  // Fetch connection statuses for all businesses
+  const { data: connectionStatuses = {} } = useQuery({
+    queryKey: ['connection-statuses-bulk'],
+    queryFn: async () => {
+      if (!currentUserId) return {};
+      const statuses: Record<string, any> = {};
+
+      // Get all connections for current user
+      const allConnections = await pb.collection('connections').getList(1, 200, {
+        filter: `user_from="${currentUserId}" || user_to="${currentUserId}"`
+      });
+
+      // Map connections by the other user's ID
+      allConnections.items.forEach((conn: any) => {
+        const otherUserId = conn.user_from === currentUserId ? conn.user_to : conn.user_from;
+        statuses[otherUserId] = {
+          status: conn.status,
+          connection: conn,
+          isSender: conn.user_from === currentUserId
+        };
+      });
+
+      return statuses;
+    },
+    enabled: !!currentUserId,
+  });
+
+  // Send connection request mutation
+  const sendConnectionMutation = useMutation({
+    mutationFn: async ({ userId, businessId, businessName }: { userId: string; businessId: string; businessName: string }) => {
+      return connectionService.sendRequest({
+        user_to: userId,
+        business_to: businessId,
+        message: `I'd like to connect with ${businessName}`
+      });
+    },
+    onSuccess: () => {
+      toast.success("Connection request sent!");
+      queryClient.invalidateQueries({ queryKey: ['connection-statuses-bulk'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to send connection request");
+    }
+  });
+
   const industries = ["Technology", "Manufacturing", "Retail", "Healthcare", "Finance", "Logistics", "Construction"];
   const badges = ["Verified", "ISO Certified", "Minority-owned", "Eco-friendly", "Made in USA"];
 
-  const handleIndustryToggle = (industry) => {
+  const handleIndustryToggle = (industry: string) => {
     setSelectedIndustries(prev =>
       prev.includes(industry) ? prev.filter(i => i !== industry) : [...prev, industry]
     );
   };
 
-  const handleBadgeToggle = (badge) => {
+  const handleBadgeToggle = (badge: string) => {
     setSelectedBadges(prev =>
       prev.includes(badge) ? prev.filter(b => b !== badge) : [...prev, badge]
     );
   };
 
-  const handleConnect = (businessId) => {
-    setConnectedBusinesses(prev => [...prev, businessId]);
-    toast({
-      title: "Connection Request Sent!",
-      description: "Your request is pending approval.",
-      className: "bg-[#08B150] text-white border-none",
+  const handleConnect = (business: any) => {
+    if (!business.owner || !business.id) {
+      toast.error("Invalid business data");
+      return;
+    }
+
+    sendConnectionMutation.mutate({
+      userId: business.owner,
+      businessId: business.id,
+      businessName: business.business_name
     });
   };
 
-  const filteredBusinesses = businesses.filter((business) => {
+  const filteredBusinesses = businesses.filter((business: any) => {
     const matchesSearch = business.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          business.services?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+                          business.services?.some((s: any) => s.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesIndustry = selectedIndustries.length === 0 || selectedIndustries.includes(business.industry);
     const matchesTrust = business.trust_score >= trustScoreRange[0] && business.trust_score <= trustScoreRange[1];
     return matchesSearch && matchesIndustry && matchesTrust;
   });
 
-  const pendingConnections = filteredBusinesses.filter(b => connectedBusinesses.includes(b.id));
+  // Get pending connections from connection statuses
+  const pendingConnections = filteredBusinesses.filter((b: any) => {
+    if (!b.owner) return false;
+    const status = connectionStatuses[b.owner];
+    return status?.status === 'pending' && status?.isSender;
+  });
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
@@ -317,27 +375,55 @@ export default function Search() {
                           <Award className="w-4 h-4 fill-current" />
                           <span className="text-sm font-semibold">{business.trust_score || 0}</span>
                         </div>
-                        <Button 
-                          size="sm" 
-                          className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleConnect(business.id);
-                          }}
-                          disabled={connectedBusinesses.includes(business.id)}
-                        >
-                          {connectedBusinesses.includes(business.id) ? (
-                            <>
-                              <Check className="w-4 h-4 mr-1" />
-                              Connected
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="w-4 h-4 mr-1" />
-                              Connect
-                            </>
-                          )}
-                        </Button>
+                        {business.owner === currentUserId ? (
+                          <Badge variant="outline" className="text-xs">
+                            Your Business
+                          </Badge>
+                        ) : connectionStatuses[business.owner]?.status === 'pending' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-amber-300 text-amber-700"
+                            disabled
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            <Clock className="w-4 h-4 mr-1" />
+                            {connectionStatuses[business.owner]?.isSender ? 'Request Sent' : 'Pending'}
+                          </Button>
+                        ) : connectionStatuses[business.owner]?.status === 'accepted' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-green-300 text-green-700"
+                            disabled
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Connected
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleConnect(business);
+                            }}
+                            disabled={sendConnectionMutation.isPending}
+                          >
+                            {sendConnectionMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                Connecting...
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Connect
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

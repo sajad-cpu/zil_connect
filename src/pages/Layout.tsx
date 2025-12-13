@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { pb } from "@/api/pocketbaseClient";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { businessService } from "@/api/services/businessService";
 import {
   Home,
   Search,
@@ -49,10 +51,9 @@ const navigationItems = [
   { title: "Marketplace", url: createPageUrl("Marketplace"), icon: ShoppingBag },
   { title: "Opportunities", url: createPageUrl("Opportunities"), icon: Briefcase },
   { title: "Offers", url: createPageUrl("Offers"), icon: Tag },
-  { title: "Events", url: createPageUrl("Events"), icon: Calendar },
-  { title: "Community", url: createPageUrl("Community"), icon: Users },
+  // { title: "Events", url: createPageUrl("Events"), icon: Calendar },
   { title: "Knowledge", url: createPageUrl("Knowledge"), icon: GraduationCap },
-  { title: "Analytics", url: createPageUrl("Analytics"), icon: BarChart3 },
+  // { title: "Analytics", url: createPageUrl("Analytics"), icon: BarChart3 },
 ];
 
 export default function Layout({ children, currentPageName }: LayoutProps) {
@@ -62,6 +63,13 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userName, setUserName] = useState("My Business");
+
+  // Fetch business data for profile display
+  const { data: business } = useQuery({
+    queryKey: ['business-profile-header'],
+    queryFn: () => businessService.getMyBusiness(),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   // Check authentication BEFORE rendering - prevents content flash
   const isAuthenticated = pb.authStore.isValid && pb.authStore.model;
@@ -162,26 +170,26 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
       `}</style>
 
       {/* Top Navigation Bar */}
-      <motion.nav 
+      <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`bg-[#241C3A] text-white shadow-lg sticky top-0 z-50 transition-all duration-300 ${
+        className={`bg-[#241C3A] text-white shadow-lg sticky top-0 z-50 transition-all duration-300 overflow-hidden ${
           scrolled ? 'backdrop-blur-md bg-[#241C3A]/95 shadow-2xl' : ''
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4">
-          <div className={`flex items-center justify-between transition-all duration-300 ${
+        <div className="max-w-7xl mx-auto px-2 sm:px-4">
+          <div className={`flex items-center justify-between transition-all duration-300 overflow-x-hidden ${
             scrolled ? 'h-14' : 'h-16'
           }`}>
             {/* Logo */}
-            <Link to={createPageUrl("Home")} className="flex items-center gap-3 hover:opacity-90 transition-all duration-300 hover:scale-105">
-              <motion.div 
+            <Link to={createPageUrl("Home")} className="flex items-center gap-2 hover:opacity-90 transition-all duration-300 hover:scale-105">
+              <motion.div
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
-                className="w-10 h-10 bg-[#6C4DE6] rounded-lg flex items-center justify-center shadow-lg"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#6C4DE6] rounded-lg flex items-center justify-center shadow-lg"
               >
-                <Sparkles className="w-6 h-6 text-white" />
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </motion.div>
               <div className="hidden md:block">
                 <h1 className="font-bold text-lg">Zil Connect</h1>
@@ -215,9 +223,9 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-2">
-              {/* Invitations */}
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Invitations - Show on large screens */}
+              <motion.div className="hidden lg:block" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <Link to={createPageUrl("Invitations")}>
                   <Button variant="ghost" size="icon" className="text-white hover:bg-[#3C2F63] relative transition-all duration-300">
                     <Users className="w-5 h-5" />
@@ -228,8 +236,8 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                 </Link>
               </motion.div>
 
-              {/* Messages */}
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              {/* Messages - Show on large screens */}
+              <motion.div className="hidden lg:block" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <Link to={createPageUrl("Connected")}>
                   <Button variant="ghost" size="icon" className="text-white hover:bg-[#3C2F63] relative transition-all duration-300">
                     <MessageSquare className="w-5 h-5" />
@@ -240,8 +248,8 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                 </Link>
               </motion.div>
 
-              {/* Notifications */}
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              {/* Notifications - Show on large screens */}
+              <motion.div className="hidden lg:block" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-[#3C2F63] relative transition-all duration-300">
                   <Bell className="w-5 h-5" />
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-[#6C4DE6] text-white text-xs border-2 border-[#241C3A] pulse-glow">
@@ -254,11 +262,13 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-[#3C2F63] transition-all duration-300">
-                      <div className="w-8 h-8 bg-[#6C4DE6] rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4" />
+                    <Button variant="ghost" className="flex items-center gap-1.5 text-white hover:bg-[#3C2F63] transition-all duration-300 pl-2 pr-2 sm:pl-3 sm:pr-3">
+                      <div className="w-8 h-8 bg-[#6C4DE6] rounded-full flex items-center justify-center font-semibold text-white text-sm">
+                        {business?.business_name?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
                       </div>
-                      <span className="hidden md:block text-sm font-medium">{userName}</span>
+                      <span className="hidden lg:block text-sm font-medium">
+                        {business?.business_name || userName}
+                      </span>
                     </Button>
                   </motion.div>
                 </DropdownMenuTrigger>
@@ -290,14 +300,14 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                     <Menu className="w-5 h-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72 bg-white p-0">
+                <SheetContent side="right" className="w-[85vw] max-w-sm bg-white p-0">
                   <div className="p-4 border-b">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#6C4DE6] rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
+                      <div className="w-10 h-10 bg-[#6C4DE6] rounded-full flex items-center justify-center font-semibold text-white">
+                        {business?.business_name?.[0]?.toUpperCase() || <User className="w-5 h-5 text-white" />}
                       </div>
                       <div>
-                        <p className="font-semibold text-[#1E1E1E]">{userName}</p>
+                        <p className="font-semibold text-[#1E1E1E]">{business?.business_name || userName}</p>
                         <p className="text-xs text-[#7C7C7C]">Premium Member</p>
                       </div>
                     </div>
@@ -360,7 +370,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
             transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-6 right-6 z-40"
           >
             <Button
               size="lg"

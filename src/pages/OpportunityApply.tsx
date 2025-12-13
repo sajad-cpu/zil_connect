@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { opportunityService } from "@/api/services/opportunityService";
+import { applicationService } from "@/api/services/applicationService";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 import {
   Briefcase,
   ArrowLeft,
@@ -17,8 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 export default function OpportunityApply() {
+  const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const opportunityId = urlParams.get("id");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     company_name: "",
     contact_person: "",
@@ -37,18 +41,65 @@ export default function OpportunityApply() {
     initialData: null,
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Application submitted:", formData);
-    // Here you would save the application
+
+    // Prevent double submission
+    if (isSubmitting) {
+      console.log('Already submitting, ignoring duplicate submission');
+      return;
+    }
+
+    if (!opportunityId) {
+      toast.error("Invalid opportunity");
+      return;
+    }
+
+    console.log('Starting application submission for opportunity:', opportunityId);
+    setIsSubmitting(true);
+
+    try {
+      // Submit application
+      const result = await applicationService.apply({
+        opportunity: opportunityId,
+        ...formData
+      });
+
+      console.log('Application submitted successfully:', result);
+      toast.success("Application submitted successfully!");
+
+      // Keep loading state active and navigate after brief delay
+      // This ensures the success message is visible and loading continues
+      setTimeout(() => {
+        navigate(createPageUrl("Opportunities"), { replace: true });
+      }, 800);
+    } catch (error: any) {
+      console.error("Error submitting application:", error);
+      toast.error(error.message || "Failed to submit application");
+      setIsSubmitting(false); // Only reset on error
+    }
   };
 
+  // Show loading screen during initial load or submission
   if (isLoading || !opportunity) {
     return (
       <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-[#7C7C7C]">Loading opportunity...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen during submission (after form is filled)
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#08B150] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#1E1E1E] font-semibold mb-2">Submitting Application...</p>
+          <p className="text-[#7C7C7C]">Please wait while we process your application</p>
         </div>
       </div>
     );
@@ -78,7 +129,7 @@ export default function OpportunityApply() {
               </div>
               <div>
                 <CardTitle className="text-2xl text-[#1E1E1E] mb-2">{opportunity.title}</CardTitle>
-                <p className="text-[#7C7C7C]">Posted by {opportunity.business_name}</p>
+                <p className="text-[#7C7C7C]">Posted by {opportunity.company_name}</p>
               </div>
             </div>
           </CardHeader>
@@ -91,7 +142,7 @@ export default function OpportunityApply() {
               </div>
               <div>
                 <p className="text-xs text-[#7C7C7C] mb-1">Budget</p>
-                <p className="font-semibold text-[#1E1E1E]">{opportunity.budget_range}</p>
+                <p className="font-semibold text-[#1E1E1E]">{opportunity.budget}</p>
               </div>
               <div>
                 <p className="text-xs text-[#7C7C7C] mb-1">Location</p>
@@ -182,9 +233,13 @@ export default function OpportunityApply() {
               </div>
 
               <div className="flex gap-4">
-                <Button type="submit" className="flex-1 bg-[#6C4DE6] hover:bg-[#593CC9] text-white">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-[#6C4DE6] hover:bg-[#593CC9] text-white disabled:opacity-50"
+                >
                   <Send className="w-4 h-4 mr-2" />
-                  Submit Application
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
                 </Button>
                 <Button type="button" variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC]">
                   <Link to={createPageUrl("Opportunities")}>

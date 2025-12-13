@@ -19,6 +19,8 @@ import CourseDetails from "./CourseDetails";
 import ModuleLessons from "./ModuleLessons";
 import OpportunityDetails from "./OpportunityDetails";
 import AppliedOpportunities from "./AppliedOpportunities";
+import CreateOpportunity from "./CreateOpportunity";
+import MyOpportunities from "./MyOpportunities";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
 import LoadingScreen from "../components/LoadingScreen";
@@ -46,6 +48,8 @@ const PAGES: Record<string, any> = {
   ModuleLessons: ModuleLessons,
   OpportunityDetails: OpportunityDetails,
   AppliedOpportunities: AppliedOpportunities,
+  CreateOpportunity: CreateOpportunity,
+  MyOpportunities: MyOpportunities,
   SignIn: SignIn,
   SignUp: SignUp,
 }
@@ -125,6 +129,8 @@ export default function Pages() {
         <Route path="/ModuleLessons" element={<PageWithLayout><ModuleLessons /></PageWithLayout>} />
         <Route path="/OpportunityDetails" element={<PageWithLayout><OpportunityDetails /></PageWithLayout>} />
         <Route path="/AppliedOpportunities" element={<PageWithLayout><AppliedOpportunities /></PageWithLayout>} />
+        <Route path="/CreateOpportunity" element={<PageWithLayout><CreateOpportunity /></PageWithLayout>} />
+        <Route path="/MyOpportunities" element={<PageWithLayout><MyOpportunities /></PageWithLayout>} />
       </Routes>
     </Router>
   );

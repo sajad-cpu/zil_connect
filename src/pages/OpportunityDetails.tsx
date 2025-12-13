@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { opportunityService } from "@/api/services/opportunityService";
+import { applicationService } from "@/api/services/applicationService";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { pb } from "@/api/pocketbaseClient";
 import {
   ArrowLeft,
   Briefcase,
@@ -19,22 +21,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function OpportunityDetails() {
+  const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const opportunityId = urlParams.get("id");
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [isCheckingApplication, setIsCheckingApplication] = useState(true);
   const { toast } = useToast();
+  const currentUserId = pb.authStore.model?.id;
 
   const { data: opportunity, isLoading } = useQuery({
     queryKey: ['opportunity-details', opportunityId],
@@ -44,6 +40,23 @@ export default function OpportunityDetails() {
     },
     initialData: null,
   });
+
+  // Check if user has already applied
+  useEffect(() => {
+    const checkApplication = async () => {
+      if (!opportunityId) return;
+      setIsCheckingApplication(true);
+      try {
+        const applied = await applicationService.hasApplied(opportunityId);
+        setHasApplied(applied);
+      } catch (error) {
+        console.error("Error checking application:", error);
+      } finally {
+        setIsCheckingApplication(false);
+      }
+    };
+    checkApplication();
+  }, [opportunityId]);
 
   const getTypeColor = (type) => {
     const colors = {
@@ -79,20 +92,17 @@ export default function OpportunityDetails() {
   };
 
   const handleApplyClick = () => {
-    setShowConfirmDialog(true);
-  };
-
-  const handleConfirmApply = () => {
-    // Simulate API call
-    setTimeout(() => {
-      setHasApplied(true);
-      setShowConfirmDialog(false);
+    // Check if it's own opportunity
+    if (opportunity?.user === currentUserId) {
       toast({
-        title: "Application Submitted Successfully!",
-        description: "Your application has been sent to the business.",
-        className: "bg-[#08B150] text-white border-none",
+        title: "Cannot Apply",
+        description: "You cannot apply to your own opportunity.",
       });
-    }, 500);
+      return;
+    }
+
+    // Navigate to apply form
+    navigate(createPageUrl("OpportunityApply") + `?id=${opportunityId}`);
   };
 
   if (isLoading || !opportunity) {
@@ -151,7 +161,7 @@ export default function OpportunityDetails() {
 
             <div className="flex items-center gap-2 text-[#7C7C7C]">
               <Building2 className="w-4 h-4 text-[#318FFD]" />
-              <span className="font-medium">Posted by {opportunity.business_name}</span>
+              <span className="font-medium">Posted by {opportunity.company_name}</span>
               {opportunity.is_verified && (
                 <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20 ml-2">
                   <Award className="w-3 h-3 mr-1" />
@@ -169,7 +179,7 @@ export default function OpportunityDetails() {
                   <DollarSign className="w-4 h-4 text-[#318FFD]" />
                   <span className="text-xs">Budget</span>
                 </div>
-                <p className="font-semibold text-[#1E1E1E]">{opportunity.budget_range || "Negotiable"}</p>
+                <p className="font-semibold text-[#1E1E1E]">{opportunity.budget || "Negotiable"}</p>
               </div>
               <div>
                 <div className="flex items-center gap-2 text-[#7C7C7C] mb-1">
@@ -258,41 +268,13 @@ export default function OpportunityDetails() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-[#1E1E1E] mb-1">Application Submitted</h3>
-                  <p className="text-[#7C7C7C]">We'll notify you when there's an update from {opportunity.business_name}</p>
+                  <p className="text-[#7C7C7C]">We'll notify you when there's an update from {opportunity.company_name}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-[#1E1E1E]">Submit Application?</DialogTitle>
-            <DialogDescription className="text-[#7C7C7C]">
-              Would you like to apply for this opportunity? Your profile information will be shared with {opportunity.business_name}.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmDialog(false)}
-              className="flex-1 border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC]"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmApply}
-              className="flex-1 bg-[#08B150] hover:bg-[#06893f] text-white"
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

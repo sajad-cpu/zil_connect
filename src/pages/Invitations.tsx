@@ -1,50 +1,117 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 import {
   Users,
   UserPlus,
   UserCheck,
   UserX,
-  MessageSquare,
   Building2,
   Send,
-  Inbox
+  Inbox,
+  Loader2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Avatar } from "@/components/ui/avatar";
+import { connectionService } from "@/api/services/connectionService";
 
 export default function Invitations() {
-  // Mock data - replace with real data from entities
-  const receivedInvitations = [
-    { id: 1, userName: "John Smith", businessName: "Tech Solutions Inc", message: "Would love to connect and explore partnership opportunities", timestamp: "2 hours ago" },
-    { id: 2, userName: "Sarah Johnson", businessName: "Digital Marketing Pro", message: "Interested in your services", timestamp: "5 hours ago" },
-    { id: 3, userName: "Mike Chen", businessName: "Global Logistics Ltd", message: "Let's discuss collaboration", timestamp: "1 day ago" },
-  ];
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("received");
 
-  const sentInvitations = [
-    { id: 4, userName: "Emily Davis", businessName: "Creative Agency", status: "pending", timestamp: "1 day ago" },
-    { id: 5, userName: "Robert Wilson", businessName: "Manufacturing Corp", status: "pending", timestamp: "3 days ago" },
-  ];
+  // Fetch received connection requests
+  const { data: receivedInvitations = [], isLoading: loadingReceived } = useQuery({
+    queryKey: ['connection-requests-received'],
+    queryFn: () => connectionService.getPendingRequests(),
+  });
+
+  // Fetch sent connection requests
+  const { data: sentInvitations = [], isLoading: loadingSent } = useQuery({
+    queryKey: ['connection-requests-sent'],
+    queryFn: () => connectionService.getSentRequests(),
+  });
+
+  // Accept connection mutation
+  const acceptMutation = useMutation({
+    mutationFn: (connectionId: string) => connectionService.acceptRequest(connectionId),
+    onSuccess: () => {
+      toast.success("Connection request accepted!");
+      queryClient.invalidateQueries({ queryKey: ['connection-requests-received'] });
+      queryClient.invalidateQueries({ queryKey: ['connections'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to accept connection request");
+    }
+  });
+
+  // Reject connection mutation
+  const rejectMutation = useMutation({
+    mutationFn: (connectionId: string) => connectionService.rejectRequest(connectionId),
+    onSuccess: () => {
+      toast.success("Connection request declined");
+      queryClient.invalidateQueries({ queryKey: ['connection-requests-received'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to decline connection request");
+    }
+  });
+
+  // Cancel sent request mutation
+  const cancelMutation = useMutation({
+    mutationFn: (connectionId: string) => connectionService.removeConnection(connectionId),
+    onSuccess: () => {
+      toast.success("Connection request cancelled");
+      queryClient.invalidateQueries({ queryKey: ['connection-requests-sent'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to cancel connection request");
+    }
+  });
 
   const hasConnections = receivedInvitations.length > 0 || sentInvitations.length > 0;
 
-  const handleAccept = (id) => {
-    console.log("Accept invitation", id);
-    // Implement accept logic
+  const handleAccept = (connectionId: string) => {
+    acceptMutation.mutate(connectionId);
   };
 
-  const handleDecline = (id) => {
-    console.log("Decline invitation", id);
-    // Implement decline logic
+  const handleDecline = (connectionId: string) => {
+    rejectMutation.mutate(connectionId);
   };
 
-  const handleMessage = (id) => {
-    console.log("Message user", id);
-    // Navigate to chat
+  const handleCancelRequest = (connectionId: string) => {
+    cancelMutation.mutate(connectionId);
   };
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return "1 day ago";
+    return `${diffDays} days ago`;
+  };
+
+  // Show loading state
+  if (loadingReceived || loadingSent) {
+    return (
+      <div className="min-h-screen bg-[#F1F1F2] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-[#FB6542] animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading connection requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F1F1F2]">
@@ -69,11 +136,18 @@ export default function Invitations() {
                 Add your first connection or start your journey to connect with businesses that match your goals
               </p>
               <div className="flex gap-4 justify-center">
-                <Button className="bg-[#FB6542] hover:bg-[#e5573a] text-white">
+                <Button
+                  className="bg-[#FB6542] hover:bg-[#e5573a] text-white"
+                  onClick={() => navigate(createPageUrl("Search"))}
+                >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Find Businesses
                 </Button>
-                <Button variant="outline" className="border-[#00246B] text-[#00246B] hover:bg-[#00246B] hover:text-white">
+                <Button
+                  variant="outline"
+                  className="border-[#00246B] text-[#00246B] hover:bg-[#00246B] hover:text-white"
+                  onClick={() => navigate(createPageUrl("Profile"))}
+                >
                   Complete Your Profile
                 </Button>
               </div>
@@ -94,124 +168,153 @@ export default function Invitations() {
 
             {/* Received Invitations */}
             <TabsContent value="received" className="space-y-4">
-              {receivedInvitations.map((invitation) => (
-                <Card key={invitation.id} className="border-none shadow-lg hover:shadow-xl transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      {/* Avatar */}
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                        {invitation.userName[0]}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-bold text-lg text-[#00246B]">{invitation.userName}</h3>
-                            <div className="flex items-center gap-2 text-gray-600 text-sm">
-                              <Building2 className="w-4 h-4" />
-                              <span>{invitation.businessName}</span>
-                            </div>
-                          </div>
-                          <span className="text-xs text-gray-500">{invitation.timestamp}</span>
-                        </div>
-                        
-                        {invitation.message && (
-                          <p className="text-gray-600 text-sm mb-4 bg-gray-50 p-3 rounded-lg">
-                            "{invitation.message}"
-                          </p>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            className="bg-[#FB6542] hover:bg-[#e5573a] text-white"
-                            onClick={() => handleAccept(invitation.id)}
-                          >
-                            <UserCheck className="w-4 h-4 mr-2" />
-                            Accept
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-red-300 text-red-600 hover:bg-red-50"
-                            onClick={() => handleDecline(invitation.id)}
-                          >
-                            <UserX className="w-4 h-4 mr-2" />
-                            Decline
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-[#00246B] text-[#00246B] hover:bg-[#00246B] hover:text-white"
-                            onClick={() => handleMessage(invitation.id)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Message
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+              {receivedInvitations.length === 0 ? (
+                <Card className="text-center py-12 border-none shadow-lg">
+                  <CardContent>
+                    <Inbox className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-[#00246B] mb-2">No pending requests</h3>
+                    <p className="text-gray-600">You don't have any connection requests at the moment</p>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                receivedInvitations.map((invitation: any) => {
+                  const senderBusiness = invitation.expand?.business_from;
+                  const senderUser = invitation.expand?.user_from;
+
+                  return (
+                    <Card key={invitation.id} className="border-none shadow-lg hover:shadow-xl transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          {/* Avatar */}
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                            {senderBusiness?.business_name?.[0]?.toUpperCase() || "?"}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="font-bold text-lg text-[#00246B]">
+                                  {senderUser?.name || "Unknown User"}
+                                </h3>
+                                <div className="flex items-center gap-2 text-gray-600 text-sm">
+                                  <Building2 className="w-4 h-4" />
+                                  <span>{senderBusiness?.business_name || "Unknown Business"}</span>
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-500">{formatTimestamp(invitation.created)}</span>
+                            </div>
+
+                            {invitation.message && (
+                              <p className="text-gray-600 text-sm mb-4 bg-gray-50 p-3 rounded-lg">
+                                "{invitation.message}"
+                              </p>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="bg-[#FB6542] hover:bg-[#e5573a] text-white"
+                                onClick={() => handleAccept(invitation.id)}
+                                disabled={acceptMutation.isPending}
+                              >
+                                {acceptMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <UserCheck className="w-4 h-4 mr-2" />
+                                )}
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                                onClick={() => handleDecline(invitation.id)}
+                                disabled={rejectMutation.isPending}
+                              >
+                                <UserX className="w-4 h-4 mr-2" />
+                                Decline
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
             </TabsContent>
 
             {/* Sent Invitations */}
             <TabsContent value="sent" className="space-y-4">
-              {sentInvitations.map((invitation) => (
-                <Card key={invitation.id} className="border-none shadow-lg hover:shadow-xl transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      {/* Avatar */}
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                        {invitation.userName[0]}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-bold text-lg text-[#00246B]">{invitation.userName}</h3>
-                            <div className="flex items-center gap-2 text-gray-600 text-sm">
-                              <Building2 className="w-4 h-4" />
-                              <span>{invitation.businessName}</span>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
-                            Pending
-                          </Badge>
-                        </div>
-                        
-                        <p className="text-sm text-gray-500 mb-4">
-                          Invitation sent {invitation.timestamp}
-                        </p>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-red-300 text-red-600 hover:bg-red-50"
-                          >
-                            Cancel Request
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-[#00246B] text-[#00246B] hover:bg-[#00246B] hover:text-white"
-                            onClick={() => handleMessage(invitation.id)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Send Message
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+              {sentInvitations.length === 0 ? (
+                <Card className="text-center py-12 border-none shadow-lg">
+                  <CardContent>
+                    <Send className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-[#00246B] mb-2">No sent requests</h3>
+                    <p className="text-gray-600">You haven't sent any connection requests yet</p>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                sentInvitations.map((invitation: any) => {
+                  const receiverBusiness = invitation.expand?.business_to;
+                  const receiverUser = invitation.expand?.user_to;
+
+                  return (
+                    <Card key={invitation.id} className="border-none shadow-lg hover:shadow-xl transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          {/* Avatar */}
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                            {receiverBusiness?.business_name?.[0]?.toUpperCase() || "?"}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="font-bold text-lg text-[#00246B]">
+                                  {receiverUser?.name || "Unknown User"}
+                                </h3>
+                                <div className="flex items-center gap-2 text-gray-600 text-sm">
+                                  <Building2 className="w-4 h-4" />
+                                  <span>{receiverBusiness?.business_name || "Unknown Business"}</span>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                                Pending
+                              </Badge>
+                            </div>
+
+                            <p className="text-sm text-gray-500 mb-4">
+                              Invitation sent {formatTimestamp(invitation.created)}
+                            </p>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                                onClick={() => handleCancelRequest(invitation.id)}
+                                disabled={cancelMutation.isPending}
+                              >
+                                {cancelMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <UserX className="w-4 h-4 mr-2" />
+                                )}
+                                Cancel Request
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
             </TabsContent>
           </Tabs>
         )}

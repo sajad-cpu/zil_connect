@@ -58,7 +58,17 @@ export const opportunityService = {
    */
   async create(data: any) {
     try {
-      const record = await pb.collection('opportunities').create(data);
+      const userId = pb.authStore.model?.id;
+      if (!userId) {
+        throw new Error('You must be logged in to create an opportunity');
+      }
+
+      const record = await pb.collection('opportunities').create({
+        ...data,
+        user: userId,
+        views: 0,
+        application_count: 0
+      });
       return record;
     } catch (error: any) {
       console.error('Error creating opportunity:', error);
@@ -103,6 +113,74 @@ export const opportunityService = {
       });
     } catch (error: any) {
       console.error('Error incrementing views:', error);
+    }
+  },
+
+  /**
+   * Get opportunities created by current user
+   */
+  async getMyOpportunities(sortBy: string = '-created') {
+    try {
+      const userId = pb.authStore.model?.id;
+      if (!userId) return [];
+
+      const records = await pb.collection('opportunities').getList(1, 50, {
+        sort: sortBy,
+        filter: `user="${userId}"`,
+        expand: 'user',
+        fields: '*' // Explicitly request all fields including application_count and views
+      });
+      return records.items;
+    } catch (error: any) {
+      console.error('Error fetching my opportunities:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Recalculate application count for an opportunity
+   */
+  async recalculateApplicationCount(opportunityId: string) {
+    try {
+      // Count all applications for this opportunity
+      const applications = await pb.collection('opportunity_applications').getList(1, 1, {
+        filter: `opportunity="${opportunityId}"`,
+        $autoCancel: false
+      });
+
+      const count = applications.totalItems;
+
+      // Update the opportunity with correct count
+      await pb.collection('opportunities').update(opportunityId, {
+        application_count: count
+      });
+
+      return count;
+    } catch (error: any) {
+      console.error('Error recalculating application count:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Recalculate counts for all user's opportunities
+   */
+  async recalculateAllCounts() {
+    try {
+      const userId = pb.authStore.model?.id;
+      if (!userId) return;
+
+      const opportunities = await pb.collection('opportunities').getList(1, 50, {
+        filter: `user="${userId}"`,
+        fields: 'id'
+      });
+
+      for (const opp of opportunities.items) {
+        await this.recalculateApplicationCount(opp.id);
+      }
+    } catch (error: any) {
+      console.error('Error recalculating all counts:', error);
+      throw error;
     }
   }
 };
