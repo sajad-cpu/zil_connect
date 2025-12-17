@@ -1,9 +1,7 @@
 import PocketBase from 'pocketbase';
 
 // Initialize PocketBase client
-export const pb = new PocketBase(
-  import.meta.env.VITE_POCKETBASE_URL || 'http://127.0.0.1:8090'
-);
+export const pb = new PocketBase('https://pocketbase.captain.sebipay.com');
 
 // Disable auto-cancellation for better UX
 pb.autoCancellation(false);

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && cp _redirects dist/",
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0 --port $PORT"
   },

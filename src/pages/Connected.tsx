@@ -111,7 +111,7 @@ export default function Connected() {
       const otherUser = isUserFrom ? conv.connection.expand?.user_to : conv.connection.expand?.user_from;
       const otherBusiness = isUserFrom ? conv.connection.expand?.business_to : conv.connection.expand?.business_from;
 
-      const userName = otherUser?.name || "";
+      const userName = otherUser?.username || otherUser?.email || "";
       const businessName = otherBusiness?.business_name || "";
 
       return userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -255,7 +255,7 @@ export default function Connected() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between mb-1">
                                 <h3 className="font-semibold text-[#00246B] text-sm truncate">
-                                  {otherUser?.name || "Unknown User"}
+                                  {otherUser?.username || otherUser?.email || "Unknown User"}
                                 </h3>
                                 {conv.latestMessage && (
                                   <span className="text-xs text-gray-500">
@@ -301,7 +301,7 @@ export default function Connected() {
                                 {otherBusiness?.business_name?.[0]?.toUpperCase() || "?"}
                               </div>
                               <div>
-                                <h3 className="font-bold text-[#00246B]">{otherUser?.name || "Unknown User"}</h3>
+                                <h3 className="font-bold text-[#00246B]">{otherUser?.username || otherUser?.email || "Unknown User"}</h3>
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                   <Building2 className="w-3 h-3" />
                                   <span>{otherBusiness?.business_name}</span>

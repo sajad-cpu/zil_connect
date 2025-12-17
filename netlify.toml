@@ -1,0 +1,17 @@
+# Netlify Configuration for Business Connection App
+
+[build]
+  # Directory to deploy (Vite outputs to 'dist')
+  publish = "dist"
+
+  # Build command
+  command = "npm run build"
+
+# Redirect all requests to index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables (you'll set these in Netlify dashboard)
+# VITE_POCKETBASE_URL = https://zil-connect.onrender.com

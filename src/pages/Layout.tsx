@@ -13,12 +13,10 @@ import {
   Users,
   User,
   Settings,
-  Calendar,
   Briefcase,
   GraduationCap,
   BarChart3,
   Menu,
-  Plus,
   Sparkles,
   Bell,
   MessageSquare,
@@ -38,8 +36,6 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
-
 interface LayoutProps {
   children: React.ReactNode;
   currentPageName: string;
@@ -60,7 +56,6 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userName, setUserName] = useState("My Business");
 
@@ -121,7 +116,6 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
-      <ScrollProgressIndicator />
       <style>{`
         :root {
           --primary: #6C4DE6;
@@ -360,45 +354,6 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
           {children}
         </motion.main>
       </AnimatePresence>
-
-      {/* Floating Action Button */}
-      <DropdownMenu open={showCreateMenu} onOpenChange={setShowCreateMenu}>
-        <DropdownMenuTrigger asChild>
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-40"
-          >
-            <Button
-              size="lg"
-              className="h-14 w-14 rounded-full shadow-2xl bg-[#6C4DE6] hover:bg-[#593CC9] transition-all duration-300 pulse-glow"
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
-          </motion.div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem className="cursor-pointer">
-            <Briefcase className="w-4 h-4 mr-2" />
-            Post Opportunity
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer">
-            <Tag className="w-4 h-4 mr-2" />
-            Create Offer
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer">
-            <Calendar className="w-4 h-4 mr-2" />
-            Host Event
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer">
-            <Users className="w-4 h-4 mr-2" />
-            Create Community
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }

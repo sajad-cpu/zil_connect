@@ -1,0 +1,474 @@
+[
+  {
+    "id": "businesses_collection",
+    "name": "businesses",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "name_field",
+        "name": "name",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 255
+        }
+      },
+      {
+        "id": "description_field",
+        "name": "description",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null
+        }
+      },
+      {
+        "id": "industry_field",
+        "name": "industry",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 255
+        }
+      },
+      {
+        "id": "location_field",
+        "name": "location",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 255
+        }
+      },
+      {
+        "id": "website_field",
+        "name": "website",
+        "type": "url",
+        "system": false,
+        "required": false,
+        "options": {
+          "exceptDomains": null,
+          "onlyDomains": null
+        }
+      },
+      {
+        "id": "logo_field",
+        "name": "logo",
+        "type": "file",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "mimeTypes": ["image/jpeg", "image/png", "image/svg+xml", "image/gif", "image/webp"],
+          "thumbs": ["100x100"]
+        }
+      },
+      {
+        "id": "owner_field",
+        "name": "owner",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "owner = @request.auth.id",
+    "deleteRule": "owner = @request.auth.id"
+  },
+  {
+    "id": "connections_collection",
+    "name": "connections",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "user_from_field",
+        "name": "user_from",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      },
+      {
+        "id": "user_to_field",
+        "name": "user_to",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      },
+      {
+        "id": "business_from_field",
+        "name": "business_from",
+        "type": "relation",
+        "system": false,
+        "required": false,
+        "options": {
+          "collectionId": "businesses_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["name"]
+        }
+      },
+      {
+        "id": "business_to_field",
+        "name": "business_to",
+        "type": "relation",
+        "system": false,
+        "required": false,
+        "options": {
+          "collectionId": "businesses_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["name"]
+        }
+      },
+      {
+        "id": "status_field",
+        "name": "status",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": null,
+          "max": 50,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "message_field",
+        "name": "message",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "user_from = @request.auth.id || user_to = @request.auth.id",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "user_to = @request.auth.id",
+    "deleteRule": "user_from = @request.auth.id || user_to = @request.auth.id"
+  },
+  {
+    "id": "messages_collection",
+    "name": "messages",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "sender_field",
+        "name": "sender",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      },
+      {
+        "id": "receiver_field",
+        "name": "receiver",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      },
+      {
+        "id": "connection_field",
+        "name": "connection",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "connections_collection",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": []
+        }
+      },
+      {
+        "id": "content_field",
+        "name": "content",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "read_field",
+        "name": "read",
+        "type": "bool",
+        "system": false,
+        "required": false,
+        "options": {}
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "sender = @request.auth.id || receiver = @request.auth.id",
+    "createRule": "sender = @request.auth.id",
+    "updateRule": "receiver = @request.auth.id",
+    "deleteRule": "sender = @request.auth.id"
+  },
+  {
+    "id": "opportunities_collection",
+    "name": "opportunities",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "title_field",
+        "name": "title",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 255,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "description_field",
+        "name": "description",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "business_field",
+        "name": "business",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "businesses_collection",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["name"]
+        }
+      },
+      {
+        "id": "created_by_field",
+        "name": "created_by",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      },
+      {
+        "id": "type_field",
+        "name": "type",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 100,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "status_field",
+        "name": "status",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 50,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "deadline_field",
+        "name": "deadline",
+        "type": "date",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "id": "requirements_field",
+        "name": "requirements",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "created_by = @request.auth.id",
+    "deleteRule": "created_by = @request.auth.id"
+  },
+  {
+    "id": "opportunity_applications_collection",
+    "name": "opportunity_applications",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "opportunity_field",
+        "name": "opportunity",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "opportunities_collection",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["title"]
+        }
+      },
+      {
+        "id": "applicant_field",
+        "name": "applicant",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["username", "email"]
+        }
+      },
+      {
+        "id": "business_field",
+        "name": "business",
+        "type": "relation",
+        "system": false,
+        "required": false,
+        "options": {
+          "collectionId": "businesses_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": ["name"]
+        }
+      },
+      {
+        "id": "status_field",
+        "name": "status",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 50,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "cover_letter_field",
+        "name": "cover_letter",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "resume_field",
+        "name": "resume",
+        "type": "file",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "maxSize": 10485760,
+          "mimeTypes": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+          "thumbs": []
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "applicant = @request.auth.id",
+    "createRule": "applicant = @request.auth.id",
+    "updateRule": "applicant = @request.auth.id",
+    "deleteRule": "applicant = @request.auth.id"
+  }
+]

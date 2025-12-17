@@ -50,7 +50,7 @@ async function exportData() {
 
   console.log('\n✨ Export complete! Files saved to:', exportDir);
   console.log('\nNext steps:');
-  console.log('1. Go to https://pocketbase.captain.sebipay.com/_/');
+  console.log('1. Go to https://zil-connect.onrender.com/_/');
   console.log('2. Create the collections (use backup-pocketbase.md as reference)');
   console.log('3. Import each JSON file using the "Import collection" option');
 }
