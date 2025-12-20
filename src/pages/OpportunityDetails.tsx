@@ -1,34 +1,35 @@
-import React, { useState, useEffect } from "react";
-import { opportunityService } from "@/api/services/opportunityService";
-import { applicationService } from "@/api/services/applicationService";
-import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { pb } from "@/api/pocketbaseClient";
+import { applicationService } from "@/api/services/applicationService";
+import { opportunityService } from "@/api/services/opportunityService";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { createPageUrl } from "@/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Award,
   Briefcase,
   Building2,
-  MapPin,
-  DollarSign,
   Calendar,
   CheckCircle,
-  Award,
+  DollarSign,
   Eye,
-  Send,
-  Clock
+  MapPin,
+  Send
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function OpportunityDetails() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const opportunityId = urlParams.get("id");
   const [hasApplied, setHasApplied] = useState(false);
   const [isCheckingApplication, setIsCheckingApplication] = useState(true);
+  const hasIncrementedViews = useRef(false);
   const { toast } = useToast();
   const currentUserId = pb.authStore.model?.id;
 
@@ -40,6 +41,23 @@ export default function OpportunityDetails() {
     },
     initialData: null,
   });
+
+  // Increment views when opportunity is loaded (only once per page load)
+  useEffect(() => {
+    if (opportunity && opportunityId && !hasIncrementedViews.current) {
+      hasIncrementedViews.current = true;
+      opportunityService.incrementViews(opportunityId)
+        .then(() => {
+          // Refetch to get updated views count
+          queryClient.invalidateQueries({ queryKey: ['opportunity-details', opportunityId] });
+          queryClient.invalidateQueries({ queryKey: ['opportunities-all'] });
+          queryClient.invalidateQueries({ queryKey: ['opportunities-recent'] });
+        })
+        .catch(err => {
+          console.error('Failed to increment views:', err);
+        });
+    }
+  }, [opportunity, opportunityId, queryClient]);
 
   // Check if user has already applied
   useEffect(() => {
@@ -71,13 +89,15 @@ export default function OpportunityDetails() {
   };
 
   const getStatusColor = (status) => {
-    const colors = {
-      "Open": "bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20",
-      "In Progress": "bg-[#318FFD]/10 text-[#318FFD] border-[#318FFD]/20",
-      "Awarded": "bg-[#6C4DE6]/10 text-[#6C4DE6] border-[#6C4DE6]/20",
-      "Closed": "bg-gray-100 text-gray-600 border-gray-200"
+    const statusLower = status?.toLowerCase() || '';
+    const colors: Record<string, string> = {
+      "open": "bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20",
+      "in progress": "bg-[#318FFD]/10 text-[#318FFD] border-[#318FFD]/20",
+      "awarded": "bg-[#6C4DE6]/10 text-[#6C4DE6] border-[#6C4DE6]/20",
+      "closed": "bg-gray-100 text-gray-600 border-gray-200",
+      "filled": "bg-gray-100 text-gray-600 border-gray-200"
     };
-    return colors[status] || colors.Open;
+    return colors[statusLower] || colors["open"];
   };
 
   const formatDate = (dateString) => {
@@ -93,7 +113,7 @@ export default function OpportunityDetails() {
 
   const handleApplyClick = () => {
     // Check if it's own opportunity
-    if (opportunity?.user === currentUserId) {
+    if (opportunity?.created_by === currentUserId || opportunity?.created_by?.id === currentUserId) {
       toast({
         title: "Cannot Apply",
         description: "You cannot apply to your own opportunity.",
@@ -161,8 +181,10 @@ export default function OpportunityDetails() {
 
             <div className="flex items-center gap-2 text-[#7C7C7C]">
               <Building2 className="w-4 h-4 text-[#318FFD]" />
-              <span className="font-medium">Posted by {opportunity.company_name}</span>
-              {opportunity.is_verified && (
+              <span className="font-medium">
+                Posted by {opportunity.expand?.business?.business_name || opportunity.expand?.business?.name || 'Business'}
+              </span>
+              {(opportunity.expand?.business?.is_verified || opportunity.expand?.business?.verified) && (
                 <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20 ml-2">
                   <Award className="w-3 h-3 mr-1" />
                   Verified
@@ -219,26 +241,41 @@ export default function OpportunityDetails() {
         </Card>
 
         {/* Requirements */}
-        {opportunity.requirements && opportunity.requirements.length > 0 && (
+        {opportunity.requirements && (
           <Card className="border-[#E4E7EB] shadow-lg mb-6">
             <CardHeader>
               <CardTitle className="text-[#1E1E1E]">Requirements</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                {opportunity.requirements.map((req, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#08B150] mt-0.5 flex-shrink-0" />
-                    <span className="text-[#7C7C7C]">{req}</span>
-                  </li>
-                ))}
-              </ul>
+              {(() => {
+                try {
+                  const requirements = typeof opportunity.requirements === 'string'
+                    ? JSON.parse(opportunity.requirements)
+                    : opportunity.requirements;
+
+                  if (Array.isArray(requirements) && requirements.length > 0) {
+                    return (
+                      <ul className="space-y-3">
+                        {requirements.map((req: string, idx: number) => (
+                          <li key={idx} className="flex items-start gap-3">
+                            <CheckCircle className="w-5 h-5 text-[#08B150] mt-0.5 flex-shrink-0" />
+                            <span className="text-[#7C7C7C]">{req}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return <p className="text-[#7C7C7C]">No specific requirements listed.</p>;
+                } catch (error) {
+                  return <p className="text-[#7C7C7C]">{opportunity.requirements}</p>;
+                }
+              })()}
             </CardContent>
           </Card>
         )}
 
         {/* Apply Button */}
-        {!hasApplied && opportunity.status === "Open" && (
+        {!hasApplied && (opportunity.status?.toLowerCase() === "open" || opportunity.status === "Open") && (
           <Card className="border-[#6C4DE6] shadow-lg bg-gradient-to-r from-[#6C4DE6]/5 to-[#7E57C2]/5">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -246,8 +283,8 @@ export default function OpportunityDetails() {
                   <h3 className="text-xl font-bold text-[#1E1E1E] mb-2">Ready to Apply?</h3>
                   <p className="text-[#7C7C7C]">Submit your application and get notified of updates</p>
                 </div>
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   onClick={handleApplyClick}
                   className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
                 >
@@ -268,7 +305,9 @@ export default function OpportunityDetails() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-[#1E1E1E] mb-1">Application Submitted</h3>
-                  <p className="text-[#7C7C7C]">We'll notify you when there's an update from {opportunity.company_name}</p>
+                  <p className="text-[#7C7C7C]">
+                    We'll notify you when there's an update from {opportunity.expand?.business?.business_name || opportunity.expand?.business?.name || 'the business'}
+                  </p>
                 </div>
               </div>
             </CardContent>

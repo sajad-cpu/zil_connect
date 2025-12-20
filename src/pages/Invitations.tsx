@@ -1,28 +1,26 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
-import {
-  Users,
-  UserPlus,
-  UserCheck,
-  UserX,
-  Building2,
-  Send,
-  Inbox,
-  Loader2
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { connectionService } from "@/api/services/connectionService";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createPageUrl } from "@/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Building2,
+  Inbox,
+  Loader2,
+  Send,
+  UserCheck,
+  UserPlus,
+  Users,
+  UserX
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Invitations() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("received");
 
   // Fetch received connection requests
   const { data: receivedInvitations = [], isLoading: loadingReceived } = useQuery({
@@ -180,6 +178,11 @@ export default function Invitations() {
                 receivedInvitations.map((invitation: any) => {
                   const senderBusiness = invitation.expand?.business_from;
                   const senderUser = invitation.expand?.user_from;
+                  const businessOwner = senderBusiness?.expand?.owner;
+
+                  const userName = senderUser?.name || senderUser?.username || senderUser?.email
+                    || businessOwner?.name || businessOwner?.username || businessOwner?.email
+                    || senderBusiness?.business_name || "Unknown User";
 
                   return (
                     <Card key={invitation.id} className="border-none shadow-lg hover:shadow-xl transition-all">
@@ -195,7 +198,7 @@ export default function Invitations() {
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <h3 className="font-bold text-lg text-[#00246B]">
-                                  {senderUser?.name || "Unknown User"}
+                                  {userName}
                                 </h3>
                                 <div className="flex items-center gap-2 text-gray-600 text-sm">
                                   <Building2 className="w-4 h-4" />
@@ -260,6 +263,11 @@ export default function Invitations() {
                 sentInvitations.map((invitation: any) => {
                   const receiverBusiness = invitation.expand?.business_to;
                   const receiverUser = invitation.expand?.user_to;
+                  const businessOwner = receiverBusiness?.expand?.owner;
+
+                  const userName = receiverUser?.name || receiverUser?.username || receiverUser?.email
+                    || businessOwner?.name || businessOwner?.username || businessOwner?.email
+                    || receiverBusiness?.business_name || "Unknown User";
 
                   return (
                     <Card key={invitation.id} className="border-none shadow-lg hover:shadow-xl transition-all">
@@ -275,7 +283,7 @@ export default function Invitations() {
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <h3 className="font-bold text-lg text-[#00246B]">
-                                  {receiverUser?.name || "Unknown User"}
+                                  {userName}
                                 </h3>
                                 <div className="flex items-center gap-2 text-gray-600 text-sm">
                                   <Building2 className="w-4 h-4" />

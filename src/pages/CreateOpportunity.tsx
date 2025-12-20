@@ -1,18 +1,7 @@
-import React, { useState } from "react";
 import { opportunityService } from "@/api/services/opportunityService";
-import { useNavigate, Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
-import {
-  Briefcase,
-  ArrowLeft,
-  Plus,
-  X
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -21,9 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { createPageUrl } from "@/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Briefcase,
+  Plus,
+  X
+} from "lucide-react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function CreateOpportunity() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requirements, setRequirements] = useState<string[]>([]);
   const [requirementInput, setRequirementInput] = useState("");
@@ -34,8 +36,7 @@ export default function CreateOpportunity() {
     budget: "",
     location: "",
     deadline: "",
-    status: "Open",
-    company_name: ""
+    status: "open"
   });
 
   const handleAddRequirement = () => {
@@ -56,8 +57,12 @@ export default function CreateOpportunity() {
     try {
       await opportunityService.create({
         ...formData,
-        requirements: requirements
+        requirements: requirements.length > 0 ? JSON.stringify(requirements) : ""
       });
+
+      queryClient.invalidateQueries({ queryKey: ['my-opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunities-all'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunities-recent'] });
 
       toast.success("Opportunity posted successfully!");
       navigate(createPageUrl("MyOpportunities"));
@@ -107,29 +112,17 @@ export default function CreateOpportunity() {
                   required
                   placeholder="e.g., Enterprise Software Development Project"
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="border-[#E4E7EB]"
                 />
               </div>
 
-              {/* Company Name */}
-              <div>
-                <Label htmlFor="company_name" className="text-[#1E1E1E]">Company Name *</Label>
-                <Input
-                  id="company_name"
-                  required
-                  placeholder="Your company name"
-                  value={formData.company_name}
-                  onChange={(e) => setFormData({...formData, company_name: e.target.value})}
-                  className="border-[#E4E7EB]"
-                />
-              </div>
 
               {/* Type and Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="type" className="text-[#1E1E1E]">Type *</Label>
-                  <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                     <SelectTrigger className="border-[#E4E7EB]">
                       <SelectValue />
                     </SelectTrigger>
@@ -146,14 +139,14 @@ export default function CreateOpportunity() {
 
                 <div>
                   <Label htmlFor="status" className="text-[#1E1E1E]">Status *</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
                     <SelectTrigger className="border-[#E4E7EB]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Open">Open</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Closed">Closed</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="filled">Filled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -168,7 +161,7 @@ export default function CreateOpportunity() {
                   rows={6}
                   placeholder="Describe the opportunity in detail..."
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="border-[#E4E7EB]"
                 />
               </div>
@@ -181,7 +174,7 @@ export default function CreateOpportunity() {
                     id="budget"
                     placeholder="e.g., $50,000 - $75,000"
                     value={formData.budget}
-                    onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                     className="border-[#E4E7EB]"
                   />
                 </div>
@@ -192,7 +185,7 @@ export default function CreateOpportunity() {
                     id="location"
                     placeholder="e.g., New York, NY or Remote"
                     value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     className="border-[#E4E7EB]"
                   />
                 </div>
@@ -205,7 +198,7 @@ export default function CreateOpportunity() {
                   id="deadline"
                   type="date"
                   value={formData.deadline}
-                  onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   className="border-[#E4E7EB]"
                 />
               </div>

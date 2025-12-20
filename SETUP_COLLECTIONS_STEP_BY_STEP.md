@@ -353,6 +353,167 @@ Delete rule:    applicant = @request.auth.id
 
 ---
 
+## Collection 6: offers
+
+### Basic Info
+- **Name**: `offers`
+- **Type**: Base collection
+
+### Fields
+
+#### 1. title (Text)
+- Type: **Text**
+- Required: **Yes** ✓
+- Min length: 1
+- Max length: 255
+
+#### 2. description (Text)
+- Type: **Text**
+- Required: **Yes** ✓
+- Min length: 1
+- Max length: (empty)
+
+#### 3. business (Relation)
+- Type: **Relation**
+- Required: **Yes** ✓
+- Collection: **businesses**
+- Max select: 1
+- Cascade delete: **Yes** ✓
+- Display fields: name
+
+#### 4. business_name (Text)
+- Type: **Text**
+- Required: No
+- Min length: (empty)
+- Max length: 255
+- **Note**: This is auto-filled from the business relation for display purposes
+
+#### 5. discount_percentage (Number)
+- Type: **Number**
+- Required: **Yes** ✓
+- Min: 0
+- Max: 100
+
+#### 6. valid_until (Date)
+- Type: **Date**
+- Required: No
+- Min: (empty)
+- Max: (empty)
+
+#### 7. is_featured (Bool)
+- Type: **Bool**
+- Required: No
+- **Note**: Featured offers appear in the carousel
+
+#### 8. redemptions (Number)
+- Type: **Number**
+- Required: No
+- Min: 0
+- Max: (empty)
+- **Note**: Count of how many times this offer was claimed
+
+#### 9. terms (Text)
+- Type: **Text**
+- Required: No
+- Min length: (empty)
+- Max length: (empty)
+- **Note**: Terms and conditions for the offer
+
+#### 10. created_by (Relation)
+- Type: **Relation**
+- Required: **Yes** ✓
+- Collection: **users**
+- Max select: 1
+- Cascade delete: **Yes** ✓
+- Display fields: username, email
+
+### API Rules
+
+```
+List rule:      @request.auth.id != ""
+View rule:      @request.auth.id != ""
+Create rule:    @request.auth.id != ""
+Update rule:    created_by = @request.auth.id
+Delete rule:    created_by = @request.auth.id
+```
+
+---
+
+## Collection 7: offer_claims
+
+### Basic Info
+- **Name**: `offer_claims`
+- **Type**: Base collection
+
+### Fields
+
+#### 1. offer (Relation)
+- Type: **Relation**
+- Required: **Yes** ✓
+- Collection: **offers**
+- Max select: 1
+- Cascade delete: **Yes** ✓
+- Display fields: title
+
+#### 2. user (Relation)
+- Type: **Relation**
+- Required: **Yes** ✓
+- Collection: **users**
+- Max select: 1
+- Cascade delete: **Yes** ✓
+- Display fields: username, email
+
+#### 3. business (Relation)
+- Type: **Relation**
+- Required: No
+- Collection: **businesses**
+- Max select: 1
+- Cascade delete: No
+- Display fields: name
+- **Note**: The business claiming the offer (if applicable)
+
+#### 4. claim_code (Text)
+- Type: **Text**
+- Required: **Yes** ✓
+- Min length: 6
+- Max length: 20
+- **Note**: Unique code generated when offer is claimed (e.g., ZIL8X2K9)
+
+#### 5. status (Select)
+- Type: **Select**
+- Required: No
+- Max select: **Single**
+- Values (add these exactly):
+  - `claimed`
+  - `redeemed`
+  - `expired`
+
+#### 6. redeemed_at (Date)
+- Type: **Date**
+- Required: No
+- Min: (empty)
+- Max: (empty)
+- **Note**: When the offer code was actually used
+
+#### 7. expires_at (Date)
+- Type: **Date**
+- Required: No
+- Min: (empty)
+- Max: (empty)
+- **Note**: Expiration date for this specific claim (usually 30 days from claim)
+
+### API Rules
+
+```
+List rule:      @request.auth.id != ""
+View rule:      user = @request.auth.id
+Create rule:    user = @request.auth.id
+Update rule:    user = @request.auth.id
+Delete rule:    user = @request.auth.id
+```
+
+---
+
 ## Quick Setup Checklist
 
 ### For Local PocketBase (http://127.0.0.1:8091/_/)
@@ -365,6 +526,8 @@ Delete rule:    applicant = @request.auth.id
 6. ✅ Create collection: **messages** (5 fields)
 7. ✅ Create collection: **opportunities** (8 fields)
 8. ✅ Create collection: **opportunity_applications** (6 fields)
+9. ✅ Create collection: **offers** (10 fields)
+10. ✅ Create collection: **offer_claims** (7 fields)
 
 ### For Production PocketBase (https://pocketbase.captain.sebipay.com/_/)
 
@@ -380,7 +543,9 @@ Follow the same steps in your production PocketBase instance.
 2. Create **connections** second (depends on users and businesses)
 3. Create **messages** third (depends on users and connections)
 4. Create **opportunities** fourth (depends on users and businesses)
-5. Create **opportunity_applications** last (depends on all above)
+5. Create **opportunity_applications** fifth (depends on opportunities and businesses)
+6. Create **offers** sixth (depends on users and businesses)
+7. Create **offer_claims** last (depends on offers, users, and businesses)
 
 ### Understanding API Rules
 

@@ -1,33 +1,34 @@
-import React, { useState } from "react";
+import { pb } from "@/api/pocketbaseClient";
 import { businessService } from "@/api/services/businessService";
 import { connectionService } from "@/api/services/connectionService";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
-import { pb } from "@/api/pocketbaseClient";
-import {
-  Building2,
-  MapPin,
-  Mail,
-  Phone,
-  Globe,
-  Award,
-  Star,
-  Eye,
-  Users,
-  CheckCircle,
-  ArrowLeft,
-  MessageSquare,
-  UserPlus,
-  UserCheck,
-  Loader2,
-  Clock
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import BadgesTab from "@/components/badges/BadgesTab";
+import PortfolioTab from "@/components/portfolio/PortfolioTab";
+import ServicesTab from "@/components/profile/ServicesTab";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createPageUrl } from "@/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Award,
+  Clock,
+  Eye,
+  Globe,
+  Loader2,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Star,
+  UserCheck,
+  UserPlus,
+  Users
+} from "lucide-react";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function BusinessDetails() {
   const navigate = useNavigate();
@@ -46,11 +47,32 @@ export default function BusinessDetails() {
   });
 
   // Get connection status with this business owner
-  const { data: connectionStatus } = useQuery({
+  const { data: connectionStatus, error: connectionStatusError } = useQuery({
     queryKey: ['connection-status', business?.owner],
-    queryFn: () => business?.owner ? connectionService.getConnectionStatus(business.owner) : null,
+    queryFn: async () => {
+      if (!business?.owner) return { status: 'none' as const, connection: null, isSender: false };
+      try {
+        const status = await connectionService.getConnectionStatus(business.owner);
+        return status || { status: 'none' as const, connection: null, isSender: false };
+      } catch (error: any) {
+        // Silently handle errors - don't show toast for connection status checks
+        // This prevents error toasts when API has temporary permission issues
+        // (e.g., "admin can only work this" errors that resolve on retry)
+        console.error('Error fetching connection status:', error);
+        return { status: 'none' as const, connection: null, isSender: false };
+      }
+    },
     enabled: !!business?.owner && business.owner !== currentUserId,
+    retry: 2,
+    retryDelay: 1000,
   });
+
+  // Log connection status errors silently (don't show toast)
+  useEffect(() => {
+    if (connectionStatusError) {
+      console.error('Connection status query error (silent):', connectionStatusError);
+    }
+  }, [connectionStatusError]);
 
   // Send connection request mutation
   const sendConnectionMutation = useMutation({
@@ -131,7 +153,7 @@ export default function BusinessDetails() {
                           Verified
                         </Badge>
                       )}
-                      {business.verified_badges?.map((badge, idx) => (
+                      {business.verified_badges?.map((badge: string, idx: number) => (
                         <Badge key={idx} variant="outline" className="border-[#E4E7EB] text-[#7C7C7C]">
                           {badge}
                         </Badge>
@@ -167,7 +189,7 @@ export default function BusinessDetails() {
                           </>
                         )}
                       </Button>
-                    ) : connectionStatus.status === 'none' ? (
+                    ) : (!connectionStatus || connectionStatus.status === 'none') ? (
                       // No connection exists
                       <Button
                         className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
@@ -194,7 +216,7 @@ export default function BusinessDetails() {
                         disabled
                       >
                         <Clock className="w-4 h-4 mr-2" />
-                        {connectionStatus.isSender ? 'Request Sent' : 'Pending'}
+                        {(connectionStatus as any)?.isSender ? 'Request Sent' : 'Pending'}
                       </Button>
                     ) : connectionStatus.status === 'accepted' ? (
                       // Already connected
@@ -224,22 +246,39 @@ export default function BusinessDetails() {
 
                 {/* Contact Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-center gap-2 text-[#7C7C7C]">
-                    <MapPin className="w-4 h-4 text-[#318FFD]" />
-                    <span>{business.location?.city}, {business.location?.state}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[#7C7C7C]">
-                    <Mail className="w-4 h-4 text-[#318FFD]" />
-                    <span>{business.contact_info?.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[#7C7C7C]">
-                    <Phone className="w-4 h-4 text-[#318FFD]" />
-                    <span>{business.contact_info?.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[#7C7C7C]">
-                    <Globe className="w-4 h-4 text-[#318FFD]" />
-                    <span>{business.contact_info?.website}</span>
-                  </div>
+                  {(business.location?.city || business.location?.state) && (
+                    <div className="flex items-center gap-2 text-[#7C7C7C]">
+                      <MapPin className="w-4 h-4 text-[#318FFD]" />
+                      <span>
+                        {[business.location?.city, business.location?.state].filter(Boolean).join(', ') || 'Not specified'}
+                      </span>
+                    </div>
+                  )}
+                  {business.contact_info?.email && (
+                    <div className="flex items-center gap-2 text-[#7C7C7C]">
+                      <Mail className="w-4 h-4 text-[#318FFD]" />
+                      <span>{business.contact_info.email}</span>
+                    </div>
+                  )}
+                  {business.contact_info?.phone && (
+                    <div className="flex items-center gap-2 text-[#7C7C7C]">
+                      <Phone className="w-4 h-4 text-[#318FFD]" />
+                      <span>{business.contact_info.phone}</span>
+                    </div>
+                  )}
+                  {business.contact_info?.website && (
+                    <div className="flex items-center gap-2 text-[#7C7C7C]">
+                      <Globe className="w-4 h-4 text-[#318FFD]" />
+                      <a
+                        href={business.contact_info.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-[#6C4DE6] hover:underline"
+                      >
+                        {business.contact_info.website}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -282,6 +321,7 @@ export default function BusinessDetails() {
             <TabsTrigger value="services" className="data-[state=active]:bg-[#6C4DE6] data-[state=active]:text-white">Services</TabsTrigger>
             <TabsTrigger value="portfolio" className="data-[state=active]:bg-[#6C4DE6] data-[state=active]:text-white">Portfolio</TabsTrigger>
             <TabsTrigger value="reviews" className="data-[state=active]:bg-[#6C4DE6] data-[state=active]:text-white">Reviews</TabsTrigger>
+            <TabsTrigger value="badges" className="data-[state=active]:bg-[#6C4DE6] data-[state=active]:text-white">Badges</TabsTrigger>
           </TabsList>
 
           <TabsContent value="about">
@@ -296,36 +336,11 @@ export default function BusinessDetails() {
           </TabsContent>
 
           <TabsContent value="services">
-            <Card className="border-[#E4E7EB] shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-[#1E1E1E]">Services Offered</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {business.services && business.services.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {business.services.map((service, idx) => (
-                      <div key={idx} className="flex items-start gap-3 p-4 rounded-lg border border-[#E4E7EB] bg-[#F8F9FC]">
-                        <CheckCircle className="w-5 h-5 text-[#08B150] mt-0.5" />
-                        <span className="text-[#1E1E1E]">{service}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[#7C7C7C]">No services listed.</p>
-                )}
-              </CardContent>
-            </Card>
+            <ServicesTab businessId={business.id} isOwner={false} />
           </TabsContent>
 
           <TabsContent value="portfolio">
-            <Card className="border-[#E4E7EB] shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-[#1E1E1E]">Portfolio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-[#7C7C7C]">No portfolio items yet.</p>
-              </CardContent>
-            </Card>
+            <PortfolioTab businessId={business.id} isOwner={false} />
           </TabsContent>
 
           <TabsContent value="reviews">
@@ -337,6 +352,10 @@ export default function BusinessDetails() {
                 <p className="text-[#7C7C7C]">No reviews yet.</p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="badges">
+            <BadgesTab businessId={business.id} isOwner={false} />
           </TabsContent>
         </Tabs>
       </div>

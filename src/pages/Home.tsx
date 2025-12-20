@@ -1,55 +1,59 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import { pb } from "@/api/pocketbaseClient";
 import { businessService } from "@/api/services/businessService";
-import { opportunityService } from "@/api/services/opportunityService";
 import { offerService } from "@/api/services/offerService";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { opportunityService } from "@/api/services/opportunityService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createPageUrl } from "@/utils";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  TrendingUp,
-  Users,
-  Briefcase,
-  Tag,
-  Calendar,
-  ArrowRight,
-  Star,
-  Award,
-  Target,
-  Zap,
-  Eye,
-  Heart,
   AlertCircle,
+  ArrowRight,
+  Award,
+  Briefcase,
+  Calendar,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Eye,
+  Heart,
+  Sparkles,
+  Star,
+  Tag,
+  Target,
+  TrendingUp,
+  Users,
+  Zap
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { format } from "date-fns";
-import OnboardingModal from "../components/OnboardingModal";
-import ScrollReveal from "../components/ScrollReveal";
-import ParallaxSection from "../components/ParallaxSection";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import MilestoneMarker from "../components/MilestoneMarker";
+import OfferClaimModal from "../components/OfferClaimModal";
+import OnboardingModal from "../components/OnboardingModal";
+import ParallaxSection from "../components/ParallaxSection";
+import ScrollReveal from "../components/ScrollReveal";
 
 export default function Home() {
   // Authentication is now handled by Layout component
 
   const [currentOfferSlide, setCurrentOfferSlide] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
-  const carouselRef = useRef(null);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const carouselRef = useRef<HTMLElement | null>(null);
   const lastScrollY = useRef(0);
-  const scrollTimeout = useRef(null);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get user data from localStorage
   const userName = localStorage.getItem("zil_user_name") || "User";
 
   const { data: businesses = [] } = useQuery({
     queryKey: ['businesses-trending'],
-    queryFn: () => businessService.filter({}, '-engagement_score', 6),
+    queryFn: () => businessService.filter({}, '-created', 6),
     initialData: [],
   });
 
@@ -63,6 +67,43 @@ export default function Home() {
     queryKey: ['offers-featured'],
     queryFn: () => offerService.filter({ is_featured: true }, '-created', 5),
     initialData: [],
+  });
+
+  // Get real counts from database
+  const { data: businessCount = 0 } = useQuery({
+    queryKey: ['stats-business-count'],
+    queryFn: async () => {
+      const result = await businessService.searchWithFilters({ page: 1, perPage: 1 });
+      return result.totalItems;
+    },
+  });
+
+  const { data: opportunityCount = 0 } = useQuery({
+    queryKey: ['stats-opportunity-count'],
+    queryFn: async () => {
+      const records = await pb.collection('opportunities').getList(1, 1, {
+        filter: 'status="open"'
+      });
+      return records.totalItems;
+    },
+  });
+
+  const { data: offerCount = 0 } = useQuery({
+    queryKey: ['stats-offer-count'],
+    queryFn: async () => {
+      const records = await pb.collection('offers').getList(1, 1);
+      return records.totalItems;
+    },
+  });
+
+  const { data: connectionCount = 0 } = useQuery({
+    queryKey: ['stats-connection-count'],
+    queryFn: async () => {
+      const records = await pb.collection('connections').getList(1, 1, {
+        filter: 'status="accepted"'
+      });
+      return records.totalItems;
+    },
   });
 
   // Auto-advance carousel (time-based)
@@ -123,10 +164,10 @@ export default function Home() {
   }, [offers.length]);
 
   const stats = [
-    { label: "Active Businesses", value: "12,500+", icon: Users, gradient: "from-blue-500 to-cyan-500" },
-    { label: "Open Opportunities", value: "850+", icon: Briefcase, gradient: "from-purple-500 to-pink-500" },
-    { label: "Active Offers", value: "340+", icon: Tag, gradient: "from-[#FB6542] to-red-500" },
-    { label: "Events This Month", value: "45", icon: Calendar, gradient: "from-green-500 to-emerald-500" },
+    { label: "Active Businesses", value: businessCount.toLocaleString(), icon: Users, gradient: "from-blue-500 to-cyan-500" },
+    { label: "Open Opportunities", value: opportunityCount.toLocaleString(), icon: Briefcase, gradient: "from-purple-500 to-pink-500" },
+    { label: "Active Offers", value: offerCount.toLocaleString(), icon: Tag, gradient: "from-[#FB6542] to-red-500" },
+    { label: "Total Connections", value: connectionCount.toLocaleString(), icon: Users, gradient: "from-green-500 to-emerald-500" },
   ];
 
   const profileCompletion = 45;
@@ -140,7 +181,7 @@ export default function Home() {
     setCurrentOfferSlide((prev) => (prev - 1 + offers.length) % offers.length);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return null;
     try {
       const date = new Date(dateString);
@@ -149,6 +190,11 @@ export default function Home() {
     } catch {
       return null;
     }
+  };
+
+  const handleClaimOffer = (offer: any) => {
+    setSelectedOffer(offer);
+    setClaimModalOpen(true);
   };
 
   return (
@@ -229,8 +275,8 @@ export default function Home() {
             >
               <motion.div whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(108, 77, 230, 0.4)" }} whileTap={{ scale: 0.95 }}>
                 <Button size="lg" asChild className="bg-[#6C4DE6] text-white hover:bg-[#593CC9] transition-all duration-300 shadow-lg hover:shadow-xl">
-                  <Link to={createPageUrl("Marketplace")}>
-                    Explore Marketplace <ArrowRight className="ml-2 w-5 h-5" />
+                  <Link to={createPageUrl("Opportunities")}>
+                    Explore Opportunities <ArrowRight className="ml-2 w-5 h-5" />
                   </Link>
                 </Button>
               </motion.div>
@@ -356,13 +402,7 @@ export default function Home() {
                   }}
                   className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
                 >
-                  <motion.div
-                    animate={{ y: [0, 3, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    ⬇️
-                  </motion.div>
-                  <span className="text-xs font-medium text-[#6C4DE6]">Scroll to explore offers</span>
+
                 </motion.div>
 
                 <div className="grid md:grid-cols-2 gap-0">
@@ -489,7 +529,11 @@ export default function Home() {
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.7 }}
                       >
-                        <Button size="lg" className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300 shadow-lg hover:shadow-xl">
+                        <Button
+                          size="lg"
+                          className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                          onClick={() => handleClaimOffer(offers[currentOfferSlide])}
+                        >
                           Claim This Offer
                         </Button>
                       </motion.div>
@@ -511,11 +555,10 @@ export default function Home() {
                         whileTap={{ scale: 0.9 }}
                         className="relative"
                       >
-                        <div className={`h-2 rounded-full transition-all duration-300 ${
-                          index === currentOfferSlide
-                            ? 'bg-[#6C4DE6] w-8'
-                            : 'bg-gray-300 w-2'
-                        }`} />
+                        <div className={`h-2 rounded-full transition-all duration-300 ${index === currentOfferSlide
+                          ? 'bg-[#6C4DE6] w-8'
+                          : 'bg-gray-300 w-2'
+                          }`} />
                         {/* Animated Progress Bar */}
                         {index === currentOfferSlide && !isCarouselPaused && (
                           <motion.div
@@ -531,37 +574,7 @@ export default function Home() {
 
                   {/* Navigation Info */}
                   <div className="flex justify-center items-center gap-4">
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: isCarouselPaused ? 1 : 0.5 }}
-                      className="text-xs text-[#7C7C7C] flex items-center gap-1"
-                    >
-                      {isCarouselPaused ? (
-                        <>
-                          <motion.span
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                          >
-                            ⏸️
-                          </motion.span>
-                          Paused
-                        </>
-                      ) : (
-                        <>
-                          <motion.span
-                            animate={{ y: [0, 3, 0] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            🔄
-                          </motion.span>
-                          Auto-playing
-                        </>
-                      )}
-                    </motion.div>
-                    <span className="text-xs text-[#7C7C7C]">•</span>
-                    <div className="text-xs text-[#7C7C7C]">
-                      {currentOfferSlide + 1} / {offers.length}
-                    </div>
+
                   </div>
 
                   {/* Previous/Next Buttons */}
@@ -613,74 +626,80 @@ export default function Home() {
         </ScrollReveal>
 
         <MilestoneMarker icon={Users} gradient="from-blue-500 to-cyan-500">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {businesses.map((business, index) => (
-              <ScrollReveal key={business.id} delay={index * 0.1}>
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -8 }}
-                  transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-                >
-                  <Card className="hover:shadow-2xl transition-all duration-300 border-[#E4E7EB] shadow-lg bg-white group cursor-pointer overflow-hidden">
-                    {/* Shimmer on Hover */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: "100%" }}
-                      transition={{ duration: 0.8 }}
-                    />
+          {businesses.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-[#7C7C7C]">No businesses found. Check your database connection.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {businesses.map((business, index) => (
+                <ScrollReveal key={business.id} delay={index * 0.1}>
+                  <motion.div
+                    whileHover={{ scale: 1.03, y: -8 }}
+                    transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+                  >
+                    <Card className="hover:shadow-2xl transition-all duration-300 border-[#E4E7EB] shadow-lg bg-white group cursor-pointer overflow-hidden">
+                      {/* Shimmer on Hover */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                        initial={{ x: "-100%" }}
+                        whileHover={{ x: "100%" }}
+                        transition={{ duration: 0.8 }}
+                      />
 
-                    <CardHeader className="pb-3 relative z-10">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <motion.div
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.6 }}
-                            className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-xl shadow-lg"
-                          >
-                            {business.business_name?.[0]?.toUpperCase() || 'B'}
-                          </motion.div>
-                          <div>
-                            <CardTitle className="text-lg group-hover:text-[#6C4DE6] transition-colors duration-300">
-                              {business.business_name}
-                            </CardTitle>
-                            <p className="text-sm text-[#7C7C7C]">{business.industry}</p>
+                      <CardHeader className="pb-3 relative z-10">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <motion.div
+                              whileHover={{ rotate: 360 }}
+                              transition={{ duration: 0.6 }}
+                              className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-xl shadow-lg"
+                            >
+                              {(business.name || business.business_name || 'B')?.[0]?.toUpperCase() || 'B'}
+                            </motion.div>
+                            <div>
+                              <CardTitle className="text-lg group-hover:text-[#6C4DE6] transition-colors duration-300">
+                                {business.name || business.business_name || 'Business'}
+                              </CardTitle>
+                              <p className="text-sm text-[#7C7C7C]">{business.industry || 'N/A'}</p>
+                            </div>
                           </div>
+                          {(business.is_verified || business.verified) && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
+                            >
+                              <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20">
+                                <Award className="w-3 h-3 mr-1" />
+                                Verified
+                              </Badge>
+                            </motion.div>
+                          )}
                         </div>
-                        {business.is_verified && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
-                          >
-                            <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20">
-                              <Award className="w-3 h-3 mr-1" />
-                              Verified
-                            </Badge>
+                      </CardHeader>
+                      <CardContent className="relative z-10">
+                        <p className="text-[#7C7C7C] text-sm mb-4 line-clamp-2">{business.tagline || business.description || 'No description available'}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-amber-500">
+                            <Star className="w-4 h-4 fill-current" />
+                            <span className="text-sm font-semibold">{business.trust_score || 0}/100</span>
+                          </div>
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300">
+                              <Link to={createPageUrl("BusinessDetails") + `?id=${business.id}`}>
+                                View Profile <ArrowRight className="ml-1 w-3 h-3" />
+                              </Link>
+                            </Button>
                           </motion.div>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="relative z-10">
-                      <p className="text-[#7C7C7C] text-sm mb-4 line-clamp-2">{business.tagline}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <Star className="w-4 h-4 fill-current" />
-                          <span className="text-sm font-semibold">{business.trust_score || 0}/100</span>
                         </div>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                          <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300">
-                            <Link to={createPageUrl("BusinessDetails") + `?id=${business.id}`}>
-                              View Profile <ArrowRight className="ml-1 w-3 h-3" />
-                            </Link>
-                          </Button>
-                        </motion.div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </ScrollReveal>
-            ))}
-          </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </ScrollReveal>
+              ))}
+            </div>
+          )}
         </MilestoneMarker>
       </section>
 
@@ -805,6 +824,19 @@ export default function Home() {
           </div>
         </section>
       </ParallaxSection>
+
+      {/* Offer Claim Modal */}
+      <OfferClaimModal
+        offer={selectedOffer}
+        open={claimModalOpen}
+        onClose={() => {
+          setClaimModalOpen(false);
+          setSelectedOffer(null);
+        }}
+        onClaimSuccess={() => {
+          // Optionally refetch offers or show success message
+        }}
+      />
     </div>
   );
 }

@@ -1,47 +1,72 @@
-import React, { useState } from "react";
+import { pb } from "@/api/pocketbaseClient";
 import { businessService } from "@/api/services/businessService";
 import { connectionService } from "@/api/services/connectionService";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
-import { pb } from "@/api/pocketbaseClient";
-import {
-  Search as SearchIcon,
-  Sparkles,
-  MapPin,
-  Building2,
-  Target,
-  TrendingUp,
-  Award,
-  Filter,
-  UserPlus,
-  Check,
-  Loader2,
-  Clock
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { createPageUrl } from "@/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Award,
+  Building2,
+  Check,
+  Clock,
+  Filter,
+  Loader2,
+  MapPin,
+  Search as SearchIcon,
+  Sparkles,
+  UserPlus
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Search() {
   const queryClient = useQueryClient();
   const currentUserId = pb.authStore.model?.id;
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [aiMatchmaking, setAiMatchmaking] = useState(false);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const [trustScoreRange, setTrustScoreRange] = useState([0, 100]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [connectingBusinessId, setConnectingBusinessId] = useState<string | null>(null);
+  const perPage = 20;
 
-  const { data: businesses = [] } = useQuery({
-    queryKey: ['businesses-search'],
-    queryFn: () => businessService.list('-engagement_score'),
-    initialData: [],
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1); // Reset to page 1 when search changes
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Use API-based search with filters and pagination
+  const { data: searchResults, isLoading } = useQuery({
+    queryKey: ['businesses-search', debouncedSearchQuery, selectedIndustries, trustScoreRange, selectedBadges, currentPage],
+    queryFn: () => businessService.searchWithFilters({
+      query: debouncedSearchQuery,
+      industries: selectedIndustries,
+      trustScoreMin: trustScoreRange[0],
+      trustScoreMax: trustScoreRange[1],
+      badges: selectedBadges,
+      page: currentPage,
+      perPage: perPage,
+      sortBy: '-created'
+    }),
   });
+
+  const businesses = searchResults?.items || [];
+  const totalPages = searchResults?.totalPages || 0;
+  const totalItems = searchResults?.totalItems || 0;
 
   // Fetch connection statuses for all businesses
   const { data: connectionStatuses = {} } = useQuery({
@@ -82,9 +107,11 @@ export default function Search() {
     onSuccess: () => {
       toast.success("Connection request sent!");
       queryClient.invalidateQueries({ queryKey: ['connection-statuses-bulk'] });
+      setConnectingBusinessId(null);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to send connection request");
+      setConnectingBusinessId(null);
     }
   });
 
@@ -95,12 +122,14 @@ export default function Search() {
     setSelectedIndustries(prev =>
       prev.includes(industry) ? prev.filter(i => i !== industry) : [...prev, industry]
     );
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleBadgeToggle = (badge: string) => {
     setSelectedBadges(prev =>
       prev.includes(badge) ? prev.filter(b => b !== badge) : [...prev, badge]
     );
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleConnect = (business: any) => {
@@ -109,6 +138,7 @@ export default function Search() {
       return;
     }
 
+    setConnectingBusinessId(business.id);
     sendConnectionMutation.mutate({
       userId: business.owner,
       businessId: business.id,
@@ -116,16 +146,8 @@ export default function Search() {
     });
   };
 
-  const filteredBusinesses = businesses.filter((business: any) => {
-    const matchesSearch = business.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          business.services?.some((s: any) => s.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesIndustry = selectedIndustries.length === 0 || selectedIndustries.includes(business.industry);
-    const matchesTrust = business.trust_score >= trustScoreRange[0] && business.trust_score <= trustScoreRange[1];
-    return matchesSearch && matchesIndustry && matchesTrust;
-  });
-
-  // Get pending connections from connection statuses
-  const pendingConnections = filteredBusinesses.filter((b: any) => {
+  // Get pending connections from businesses
+  const pendingConnections = businesses.filter((b: any) => {
     if (!b.owner) return false;
     const status = connectionStatuses[b.owner];
     return status?.status === 'pending' && status?.isSender;
@@ -141,16 +163,17 @@ export default function Search() {
             <p className="text-xl text-white/90 mb-8">
               Find the perfect business partners with advanced filters and AI matchmaking
             </p>
-            
+
             {/* Main Search Bar */}
             <div className="relative">
-              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-6 h-6" />
+              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-6 h-6 pointer-events-none z-10" />
               <Input
                 type="text"
                 placeholder="Search by business name, services, location..."
-                className="pl-14 pr-4 h-16 text-lg rounded-lg shadow-2xl border-[#E4E7EB] bg-white"
+                className="pl-14 pr-4 h-16 text-lg rounded-lg shadow-2xl border-[#E4E7EB] bg-white text-[#1E1E1E]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                autoComplete="off"
               />
             </div>
 
@@ -159,7 +182,7 @@ export default function Search() {
               <Checkbox
                 id="ai-match"
                 checked={aiMatchmaking}
-                onCheckedChange={setAiMatchmaking}
+                onCheckedChange={(checked) => setAiMatchmaking(typeof checked === 'boolean' ? checked : false)}
                 className="border-white data-[state=checked]:bg-[#6C4DE6] data-[state=checked]:border-[#6C4DE6]"
               />
               <Label htmlFor="ai-match" className="text-white cursor-pointer flex items-center gap-2">
@@ -218,7 +241,10 @@ export default function Search() {
                       max={100}
                       step={5}
                       value={trustScoreRange}
-                      onValueChange={setTrustScoreRange}
+                      onValueChange={(value) => {
+                        setTrustScoreRange(value);
+                        setCurrentPage(1);
+                      }}
                       className="w-full"
                     />
                     <div className="flex justify-between text-sm text-[#7C7C7C]">
@@ -259,6 +285,7 @@ export default function Search() {
                     setSelectedIndustries([]);
                     setSelectedBadges([]);
                     setTrustScoreRange([0, 100]);
+                    setCurrentPage(1);
                   }}
                 >
                   Clear All Filters
@@ -318,14 +345,18 @@ export default function Search() {
               </div>
             )}
 
-            <div className="mb-6">
+            <div className="mb-6 flex justify-between items-center">
               <p className="text-[#7C7C7C]">
-                <span className="font-semibold text-[#1E1E1E]">{filteredBusinesses.length}</span> businesses match your criteria
+                <span className="font-semibold text-[#1E1E1E]">{totalItems}</span> businesses match your criteria
+                {isLoading && <Loader2 className="w-4 h-4 ml-2 inline animate-spin" />}
+              </p>
+              <p className="text-sm text-[#7C7C7C]">
+                Page {currentPage} of {totalPages}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredBusinesses.map((business, index) => (
+              {businesses.map((business: any) => (
                 <Link key={business.id} to={createPageUrl("BusinessDetails") + `?id=${business.id}`}>
                   <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-[#E4E7EB] shadow-lg group cursor-pointer">
                     <CardHeader>
@@ -363,7 +394,7 @@ export default function Search() {
                             Verified
                           </Badge>
                         )}
-                        {business.verified_badges?.slice(0, 2).map((badge, idx) => (
+                        {(business.verified_badges as string[] | undefined)?.slice(0, 2).map((badge: string, idx: number) => (
                           <Badge key={idx} variant="outline" className="text-xs border-[#E4E7EB] text-[#7C7C7C]">
                             {badge}
                           </Badge>
@@ -409,9 +440,9 @@ export default function Search() {
                               e.preventDefault();
                               handleConnect(business);
                             }}
-                            disabled={sendConnectionMutation.isPending}
+                            disabled={connectingBusinessId === business.id}
                           >
-                            {sendConnectionMutation.isPending ? (
+                            {connectingBusinessId === business.id ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                 Connecting...
@@ -431,18 +462,19 @@ export default function Search() {
               ))}
             </div>
 
-            {filteredBusinesses.length === 0 && (
-              <Card className="text-center py-12 border-[#E4E7EB]">
+            {businesses.length === 0 && !isLoading && (
+              <Card className="text-center py-12 border-[#E4E7EB] col-span-2">
                 <CardContent>
                   <SearchIcon className="w-16 h-16 text-[#7C7C7C]/30 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-[#1E1E1E] mb-2">No matches found</h3>
                   <p className="text-[#7C7C7C] mb-6">Try adjusting your filters or search terms</p>
-                  <Button 
+                  <Button
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedIndustries([]);
                       setSelectedBadges([]);
                       setTrustScoreRange([0, 100]);
+                      setCurrentPage(1);
                     }}
                     className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
                   >
@@ -450,6 +482,56 @@ export default function Search() {
                   </Button>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="col-span-2 flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1 || isLoading}
+                  className="border-[#E4E7EB]"
+                >
+                  Previous
+                </Button>
+
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        onClick={() => setCurrentPage(pageNum)}
+                        disabled={isLoading}
+                        className={currentPage === pageNum ? "bg-[#6C4DE6] hover:bg-[#593CC9]" : "border-[#E4E7EB]"}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages || isLoading}
+                  className="border-[#E4E7EB]"
+                >
+                  Next
+                </Button>
+              </div>
             )}
           </div>
         </div>

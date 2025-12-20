@@ -1,22 +1,21 @@
-import React, { useState } from "react";
-import { opportunityService } from "@/api/services/opportunityService";
+import { pb } from "@/api/pocketbaseClient";
 import { applicationService } from "@/api/services/applicationService";
-import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
-import {
-  Briefcase,
-  ArrowLeft,
-  CheckCircle,
-  Send,
-  FileText
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { opportunityService } from "@/api/services/opportunityService";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { createPageUrl } from "@/utils";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Briefcase,
+  Send
+} from "lucide-react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function OpportunityApply() {
   const navigate = useNavigate();
@@ -59,10 +58,27 @@ export default function OpportunityApply() {
     setIsSubmitting(true);
 
     try {
+      // Get user's business if available
+      const userId = pb.authStore.model?.id;
+      let businessId = null;
+      if (userId) {
+        try {
+          const businesses = await pb.collection('businesses').getList(1, 1, {
+            filter: `owner="${userId}"`
+          });
+          if (businesses.items.length > 0) {
+            businessId = businesses.items[0].id;
+          }
+        } catch (businessError) {
+          console.warn('Could not fetch user business:', businessError);
+        }
+      }
+
       // Submit application
       const result = await applicationService.apply({
         opportunity: opportunityId,
-        ...formData
+        ...formData,
+        business: businessId
       });
 
       console.log('Application submitted successfully:', result);
@@ -75,6 +91,7 @@ export default function OpportunityApply() {
       }, 800);
     } catch (error: any) {
       console.error("Error submitting application:", error);
+      console.error("Error details:", error.response?.data || error.message);
       toast.error(error.message || "Failed to submit application");
       setIsSubmitting(false); // Only reset on error
     }
@@ -129,7 +146,9 @@ export default function OpportunityApply() {
               </div>
               <div>
                 <CardTitle className="text-2xl text-[#1E1E1E] mb-2">{opportunity.title}</CardTitle>
-                <p className="text-[#7C7C7C]">Posted by {opportunity.company_name}</p>
+                <p className="text-[#7C7C7C]">
+                  Posted by {opportunity.expand?.business?.business_name || opportunity.expand?.business?.name || 'Business'}
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -166,7 +185,7 @@ export default function OpportunityApply() {
                     id="company_name"
                     required
                     value={formData.company_name}
-                    onChange={(e) => setFormData({...formData, company_name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                     className="border-[#E4E7EB]"
                   />
                 </div>
@@ -176,7 +195,7 @@ export default function OpportunityApply() {
                     id="contact_person"
                     required
                     value={formData.contact_person}
-                    onChange={(e) => setFormData({...formData, contact_person: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
                     className="border-[#E4E7EB]"
                   />
                 </div>
@@ -190,7 +209,7 @@ export default function OpportunityApply() {
                     type="email"
                     required
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="border-[#E4E7EB]"
                   />
                 </div>
@@ -201,7 +220,7 @@ export default function OpportunityApply() {
                     type="tel"
                     required
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="border-[#E4E7EB]"
                   />
                 </div>
@@ -215,7 +234,7 @@ export default function OpportunityApply() {
                   rows={6}
                   placeholder="Explain why you're the right fit for this opportunity..."
                   value={formData.cover_letter}
-                  onChange={(e) => setFormData({...formData, cover_letter: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, cover_letter: e.target.value })}
                   className="border-[#E4E7EB]"
                 />
               </div>
@@ -227,7 +246,7 @@ export default function OpportunityApply() {
                   type="url"
                   placeholder="https://..."
                   value={formData.portfolio_url}
-                  onChange={(e) => setFormData({...formData, portfolio_url: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, portfolio_url: e.target.value })}
                   className="border-[#E4E7EB]"
                 />
               </div>

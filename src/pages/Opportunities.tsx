@@ -1,25 +1,8 @@
-import React, { useState } from "react";
 import { opportunityService } from "@/api/services/opportunityService";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { motion } from "framer-motion";
-import {
-  Briefcase,
-  MapPin,
-  DollarSign,
-  Calendar,
-  Filter,
-  Search as SearchIcon,
-  TrendingUp,
-  Eye,
-  Plus,
-  FolderOpen
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -27,8 +10,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createPageUrl } from "@/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import {
+  Briefcase,
+  Calendar,
+  DollarSign,
+  Eye,
+  Filter,
+  FolderOpen,
+  MapPin,
+  Plus,
+  Search as SearchIcon,
+  TrendingUp
+} from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Opportunities() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -231,7 +232,21 @@ export default function Opportunities() {
                 whileHover={{ scale: 1.03, y: -8 }}
               >
                 <Card className="border-[#E4E7EB] shadow-lg hover:shadow-xl transition-all h-full cursor-pointer">
-                  <Link to={createPageUrl("OpportunityDetails") + `?id=${opp.id}`}>
+                  <Link
+                    to={createPageUrl("OpportunityDetails") + `?id=${opp.id}`}
+                    onClick={() => {
+                      // Track view when clicking on opportunity card
+                      opportunityService.incrementViews(opp.id)
+                        .then(() => {
+                          // Invalidate queries to refresh the view count
+                          queryClient.invalidateQueries({ queryKey: ['opportunities-all'] });
+                          queryClient.invalidateQueries({ queryKey: ['opportunities-recent'] });
+                        })
+                        .catch(err => {
+                          console.error('Failed to increment views:', err);
+                        });
+                    }}
+                  >
                     <CardContent className="p-6">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">

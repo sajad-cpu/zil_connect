@@ -41,29 +41,50 @@ export const applicationService = {
       // Get opportunity to validate
       let opportunity;
       try {
-        opportunity = await pb.collection('opportunities').getOne(data.opportunity);
+        opportunity = await pb.collection('opportunities').getOne(data.opportunity, {
+          expand: 'created_by'
+        });
         console.log('Opportunity found:', opportunity.id, opportunity.title);
+        console.log('Opportunity created_by:', opportunity.created_by);
       } catch (error: any) {
         console.error('Failed to fetch opportunity:', error);
+        if (error.response) {
+          console.error('Error response:', error.response);
+          console.error('Error data:', error.response.data);
+        }
         throw new Error('Opportunity not found. It may have been deleted.');
       }
 
       // Prevent self-application
-      if (opportunity.user === userId) {
+      const opportunityOwner = opportunity.created_by || (typeof opportunity.created_by === 'string' ? opportunity.created_by : opportunity.created_by?.id);
+      if (opportunityOwner === userId) {
         throw new Error('Cannot apply to your own opportunity');
       }
 
-      // Check if opportunity is open
-      if (opportunity.status !== 'Open') {
+      // Check if opportunity is open (status is lowercase in schema)
+      const status = opportunity.status?.toLowerCase() || '';
+      if (status !== 'open') {
         throw new Error('This opportunity is no longer accepting applications');
       }
 
-      // Create application
-      const application = await pb.collection('opportunity_applications').create({
-        ...data,
+      // Prepare application data - only include fields that exist in schema
+      const applicationData: any = {
+        opportunity: data.opportunity,
         applicant: userId,
-        status: 'Pending'
-      });
+        status: 'pending'
+      };
+
+      // Add optional fields that exist in schema
+      // Schema fields: opportunity, applicant, business, status, cover_letter, resume
+      // Note: company_name, contact_person, email, phone, portfolio_url are NOT in schema
+      // These should be retrieved from expanded relations (applicant, business) when viewing
+      if (data.cover_letter) applicationData.cover_letter = data.cover_letter;
+      if (data.business) applicationData.business = data.business;
+
+      console.log('Creating application with data:', applicationData);
+
+      // Create application
+      const application = await pb.collection('opportunity_applications').create(applicationData);
 
       console.log('Application created:', application.id);
 
@@ -114,15 +135,15 @@ export const applicationService = {
       const userId = pb.authStore.model?.id;
       if (!userId) return [];
 
-      let filter = `opportunity.user="${userId}"`;
+      let filter = `opportunity.created_by="${userId}"`;
       if (opportunityId) {
-        filter = `opportunity="${opportunityId}" && ${filter}`;
+        filter = `opportunity="${opportunityId}" && opportunity.created_by="${userId}"`;
       }
 
       const records = await pb.collection('opportunity_applications').getList(1, 100, {
         sort: '-created',
         filter: filter,
-        expand: 'opportunity,applicant'
+        expand: 'opportunity,opportunity.created_by,opportunity.business,applicant,business'
       });
 
       return records.items;

@@ -1,26 +1,24 @@
-import React from "react";
 import { businessService } from "@/api/services/businessService";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Users,
-  Trophy,
-  MapPin,
-  TrendingUp,
   Award,
+  MapPin,
   Star,
   Target,
+  TrendingUp,
+  Trophy,
+  Users,
   Zap
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function Community() {
   const { data: businesses = [] } = useQuery({
     queryKey: ['businesses-community'],
-    queryFn: () => businessService.list('-engagement_score'),
+    queryFn: () => businessService.list('-created'),
     initialData: [],
   });
 
@@ -77,23 +75,21 @@ export default function Community() {
               {leaderboard.map((business, index) => (
                 <Card
                   key={business.id}
-                  className={`hover:shadow-xl transition-all duration-300 border-none shadow-lg ${
-                    index === 0 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 ring-2 ring-yellow-400' :
+                  className={`hover:shadow-xl transition-all duration-300 border-none shadow-lg ${index === 0 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 ring-2 ring-yellow-400' :
                     index === 1 ? 'bg-gradient-to-r from-gray-50 to-slate-50 ring-2 ring-gray-300' :
-                    index === 2 ? 'bg-gradient-to-r from-orange-50 to-amber-50 ring-2 ring-orange-300' :
-                    ''
-                  }`}
+                      index === 2 ? 'bg-gradient-to-r from-orange-50 to-amber-50 ring-2 ring-orange-300' :
+                        ''
+                    }`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
                       {/* Rank */}
                       <div className="flex-shrink-0">
                         {index < 3 ? (
-                          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
-                            index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
+                          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
                             index === 1 ? 'bg-gradient-to-br from-gray-300 to-slate-400' :
-                            'bg-gradient-to-br from-orange-400 to-amber-500'
-                          }`}>
+                              'bg-gradient-to-br from-orange-400 to-amber-500'
+                            }`}>
                             <Trophy className="w-8 h-8 text-white" />
                           </div>
                         ) : (
@@ -121,7 +117,7 @@ export default function Community() {
                               Verified
                             </Badge>
                           )}
-                          {business.achievements?.slice(0, 2).map((achievement, idx) => (
+                          {(business.achievements as string[])?.slice(0, 2).map((achievement, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
                               {achievement}
                             </Badge>

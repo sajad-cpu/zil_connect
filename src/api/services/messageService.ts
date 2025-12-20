@@ -1,4 +1,5 @@
 import { pb } from '../pocketbaseClient';
+import { notificationService } from './notificationService';
 
 export const messageService = {
   /**
@@ -36,23 +37,31 @@ export const messageService = {
 
       // Create message
       const message = await pb.collection('messages').create({
-        connection_id: data.connection_id,
-        sender_id: userId,
-        receiver_id: data.receiver_id,
-        text: data.text,
-        read: false,
-        attachment_url: data.attachment_url || ''
+        connection: data.connection_id,
+        sender: userId,
+        receiver: data.receiver_id,
+        content: data.text,
+        read: false
       });
 
       console.log('Message sent:', message.id);
 
-      // TODO: Create notification for receiver
-      // await notificationService.create({
-      //   user: data.receiver_id,
-      //   type: 'new_message',
-      //   message: 'You have a new message',
-      //   related_id: message.id
-      // });
+      try {
+        const senderBusiness = await pb.collection('businesses').getList(1, 1, {
+          filter: `owner="${userId}"`
+        });
+
+        const businessName = senderBusiness.items[0]?.business_name || senderBusiness.items[0]?.name;
+
+        await notificationService.create({
+          user: data.receiver_id,
+          type: 'new_message',
+          message: `${businessName || 'Someone'} sent you a message`,
+          related_id: message.id
+        });
+      } catch (notifError) {
+        console.error('Failed to create notification for message:', notifError);
+      }
 
       return message;
     } catch (error: any) {
@@ -78,8 +87,8 @@ export const messageService = {
 
       const records = await pb.collection('messages').getList(page, perPage, {
         sort: 'created',
-        filter: `connection_id="${connectionId}"`,
-        expand: 'sender_id,receiver_id'
+        filter: `connection="${connectionId}"`,
+        expand: 'sender,receiver'
       });
 
       return records.items;
@@ -101,21 +110,126 @@ export const messageService = {
       const connections = await pb.collection('connections').getList(1, 100, {
         sort: '-updated',
         filter: `(user_from="${userId}" || user_to="${userId}") && status="accepted"`,
-        expand: 'user_from,user_to,business_from,business_to'
+        expand: 'user_from,user_to,business_from,business_to,business_from.owner,business_to.owner'
       });
 
-      // For each connection, get the latest message
+      // For each connection, get the latest message and manually fetch users and owners
       const conversations = await Promise.all(
         connections.items.map(async (connection) => {
           try {
+            // Manually fetch user_from if expand failed
+            if (connection.user_from) {
+              const userFromId = typeof connection.user_from === 'string' ? connection.user_from : connection.user_from?.id;
+              const expandedUserFrom = connection.expand?.user_from;
+              if (userFromId && (!expandedUserFrom || typeof expandedUserFrom === 'string' || !expandedUserFrom.id)) {
+                try {
+                  const user = await pb.collection('users').getOne(userFromId);
+                  if (!connection.expand) connection.expand = {};
+                  connection.expand.user_from = user;
+                } catch (err) {
+                  console.error('Failed to fetch user_from:', err);
+                }
+              }
+            }
+
+            // Manually fetch user_to if expand failed
+            if (connection.user_to) {
+              const userToId = typeof connection.user_to === 'string' ? connection.user_to : connection.user_to?.id;
+              const expandedUserTo = connection.expand?.user_to;
+              if (userToId && (!expandedUserTo || typeof expandedUserTo === 'string' || !expandedUserTo.id)) {
+                try {
+                  const user = await pb.collection('users').getOne(userToId);
+                  if (!connection.expand) connection.expand = {};
+                  connection.expand.user_to = user;
+                } catch (err) {
+                  console.error('Failed to fetch user_to:', err);
+                }
+              }
+            }
+
+            // Manually fetch and attach owner data for businesses
+            if (connection.expand?.business_from) {
+              // Ensure expand object exists on business
+              if (!connection.expand.business_from.expand) {
+                connection.expand.business_from.expand = {};
+              }
+
+              // Get owner ID - could be a string ID or an object
+              let ownerId = connection.expand.business_from.owner;
+              if (typeof ownerId === 'object' && ownerId !== null) {
+                ownerId = ownerId.id || ownerId;
+              }
+
+              // If owner exists and not already expanded, fetch it
+              if (ownerId && typeof ownerId === 'string' && !connection.expand.business_from.expand.owner) {
+                try {
+                  console.log('Fetching business_from owner with ID:', ownerId);
+                  const owner = await pb.collection('users').getOne(ownerId);
+                  console.log('Fetched owner record:', {
+                    id: owner.id,
+                    name: owner.name,
+                    username: owner.username,
+                    email: owner.email
+                  });
+                  connection.expand.business_from.expand.owner = owner;
+                  console.log('Successfully stored owner in expand. Owner data:', JSON.stringify({
+                    name: owner.name,
+                    username: owner.username,
+                    email: owner.email
+                  }));
+                } catch (err) {
+                  console.error('Failed to fetch business_from owner:', ownerId, err);
+                }
+              } else if (connection.expand.business_from.expand.owner) {
+                console.log('Owner already expanded for business_from');
+              }
+            }
+
+            if (connection.expand?.business_to) {
+              // Ensure expand object exists on business
+              if (!connection.expand.business_to.expand) {
+                connection.expand.business_to.expand = {};
+              }
+
+              // Get owner ID - could be a string ID or an object
+              let ownerId = connection.expand.business_to.owner;
+              if (typeof ownerId === 'object' && ownerId !== null) {
+                ownerId = ownerId.id || ownerId;
+              }
+
+              // If owner exists and not already expanded, fetch it
+              if (ownerId && typeof ownerId === 'string' && !connection.expand.business_to.expand.owner) {
+                try {
+                  console.log('Fetching business_to owner with ID:', ownerId);
+                  const owner = await pb.collection('users').getOne(ownerId);
+                  console.log('Fetched owner record:', {
+                    id: owner.id,
+                    name: owner.name,
+                    username: owner.username,
+                    email: owner.email
+                  });
+                  connection.expand.business_to.expand.owner = owner;
+                  console.log('Successfully stored owner in expand. Owner data:', JSON.stringify({
+                    name: owner.name,
+                    username: owner.username,
+                    email: owner.email
+                  }));
+                } catch (err) {
+                  console.error('Failed to fetch business_to owner:', ownerId, err);
+                }
+              } else if (connection.expand.business_to.expand.owner) {
+                console.log('Owner already expanded for business_to');
+              }
+            }
+
             const latestMessage = await pb.collection('messages').getList(1, 1, {
               sort: '-created',
-              filter: `connection_id="${connection.id}"`
+              filter: `connection="${connection.id}"`
             });
 
             // Get unread count
             const unreadCount = await pb.collection('messages').getList(1, 1, {
-              filter: `connection_id="${connection.id}" && receiver_id="${userId}" && read=false`
+              filter: `connection="${connection.id}" && receiver="${userId}" && read=false`
             });
 
             return {
@@ -161,7 +275,7 @@ export const messageService = {
       // Get message and verify receiver is current user
       const message = await pb.collection('messages').getOne(messageId);
 
-      if (message.receiver_id !== userId) {
+      if (message.receiver !== userId) {
         throw new Error('You can only mark your own messages as read');
       }
 
@@ -195,7 +309,7 @@ export const messageService = {
 
       // Get all unread messages where current user is receiver
       const unreadMessages = await pb.collection('messages').getList(1, 100, {
-        filter: `connection_id="${connectionId}" && receiver_id="${userId}" && read=false`
+        filter: `connection="${connectionId}" && receiver="${userId}" && read=false`
       });
 
       // Mark each as read
@@ -223,7 +337,7 @@ export const messageService = {
       if (!userId) return 0;
 
       const records = await pb.collection('messages').getList(1, 1, {
-        filter: `receiver_id="${userId}" && read=false`
+        filter: `receiver="${userId}" && read=false`
       });
 
       return records.totalItems;
@@ -242,7 +356,7 @@ export const messageService = {
       if (!userId) return 0;
 
       const records = await pb.collection('messages').getList(1, 1, {
-        filter: `connection_id="${connectionId}" && receiver_id="${userId}" && read=false`
+        filter: `connection="${connectionId}" && receiver="${userId}" && read=false`
       });
 
       return records.totalItems;
@@ -265,7 +379,7 @@ export const messageService = {
       // Get message and verify sender is current user
       const message = await pb.collection('messages').getOne(messageId);
 
-      if (message.sender_id !== userId) {
+      if (message.sender !== userId) {
         throw new Error('You can only delete your own messages');
       }
 
@@ -297,8 +411,8 @@ export const messageService = {
 
       const records = await pb.collection('messages').getList(1, 50, {
         sort: '-created',
-        filter: `connection_id="${connectionId}" && text~"${searchQuery}"`,
-        expand: 'sender_id,receiver_id'
+        filter: `connection="${connectionId}" && content~"${searchQuery}"`,
+        expand: 'sender,receiver'
       });
 
       return records.items;

@@ -99,25 +99,10 @@ export default function SignUp() {
           await pb.collection('businesses').create({
             business_name: formData.businessName,
             owner: user.id,
-            tagline: "Building connections, growing together",
             description: `Welcome to ${formData.businessName} on Zil Connect!`,
-            industry: "Technology", // Default, can be updated later
-            is_verified: false,
-            trust_score: 0,
-            engagement_score: 0,
-            profile_views: 0,
-            location: {
-              city: "",
-              state: "",
-              country: ""
-            },
-            contact_info: {
-              email: formData.email,
-              phone: "",
-              website: ""
-            },
-            verified_badges: [],
-            services: [],
+            industry: "Technology",
+            location: "",
+            website: "",
           });
         } catch (businessError) {
           console.error("Error creating business profile:", businessError);

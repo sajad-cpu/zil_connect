@@ -98,18 +98,108 @@ export const businessService = {
   },
 
   /**
-   * Search businesses by query
+   * Search businesses by query with pagination
    */
-  async search(query: string) {
+  async search(query: string, page: number = 1, perPage: number = 20) {
     try {
-      const records = await pb.collection('businesses').getList(1, 50, {
+      const records = await pb.collection('businesses').getList(page, perPage, {
         filter: `business_name ~ "${query}" || description ~ "${query}"`,
-        sort: '-engagement_score'
+        sort: '-created',
+        expand: 'owner'
       });
-      return records.items;
+      return {
+        items: records.items,
+        page: records.page,
+        perPage: records.perPage,
+        totalItems: records.totalItems,
+        totalPages: records.totalPages
+      };
     } catch (error: any) {
       console.error('Error searching businesses:', error);
-      return [];
+      return {
+        items: [],
+        page: 1,
+        perPage: perPage,
+        totalItems: 0,
+        totalPages: 0
+      };
+    }
+  },
+
+  /**
+   * Search businesses with advanced filters and pagination
+   */
+  async searchWithFilters(params: {
+    query?: string;
+    industries?: string[];
+    trustScoreMin?: number;
+    trustScoreMax?: number;
+    badges?: string[];
+    page?: number;
+    perPage?: number;
+    sortBy?: string;
+  }) {
+    try {
+      const {
+        query = '',
+        industries = [],
+        trustScoreMin = 0,
+        trustScoreMax = 100,
+        badges = [],
+        page = 1,
+        perPage = 20,
+        sortBy = '-created'
+      } = params;
+
+      // Build filter string
+      const filters: string[] = [];
+
+      // Search query filter
+      if (query && query.trim()) {
+        filters.push(`(business_name ~ "${query}" || description ~ "${query}")`);
+      }
+
+      // Industry filter
+      if (industries.length > 0) {
+        const industryFilter = industries.map(ind => `industry="${ind}"`).join(' || ');
+        filters.push(`(${industryFilter})`);
+      }
+
+      // Trust score filter
+      if (trustScoreMin > 0 || trustScoreMax < 100) {
+        filters.push(`(trust_score >= ${trustScoreMin} && trust_score <= ${trustScoreMax})`);
+      }
+
+      // Badges filter (if you have badges field in your schema)
+      if (badges.length > 0) {
+        const badgeFilters = badges.map(badge => `verified_badges ~ "${badge}"`).join(' || ');
+        filters.push(`(${badgeFilters})`);
+      }
+
+      const filterString = filters.length > 0 ? filters.join(' && ') : '';
+
+      const records = await pb.collection('businesses').getList(page, perPage, {
+        filter: filterString || undefined,
+        sort: sortBy,
+        expand: 'owner'
+      });
+
+      return {
+        items: records.items,
+        page: records.page,
+        perPage: records.perPage,
+        totalItems: records.totalItems,
+        totalPages: records.totalPages
+      };
+    } catch (error: any) {
+      console.error('Error searching businesses with filters:', error);
+      return {
+        items: [],
+        page: params.page || 1,
+        perPage: params.perPage || 20,
+        totalItems: 0,
+        totalPages: 0
+      };
     }
   },
 

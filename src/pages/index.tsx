@@ -21,6 +21,9 @@ import OpportunityDetails from "./OpportunityDetails";
 import AppliedOpportunities from "./AppliedOpportunities";
 import CreateOpportunity from "./CreateOpportunity";
 import MyOpportunities from "./MyOpportunities";
+import CreateOffer from "./CreateOffer";
+import MyOffers from "./MyOffers";
+import MyClaimedOffers from "./MyClaimedOffers";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
 import LoadingScreen from "../components/LoadingScreen";
@@ -50,6 +53,9 @@ const PAGES: Record<string, any> = {
   AppliedOpportunities: AppliedOpportunities,
   CreateOpportunity: CreateOpportunity,
   MyOpportunities: MyOpportunities,
+  CreateOffer: CreateOffer,
+  MyOffers: MyOffers,
+  MyClaimedOffers: MyClaimedOffers,
   SignIn: SignIn,
   SignUp: SignUp,
 }
@@ -131,6 +137,9 @@ export default function Pages() {
         <Route path="/AppliedOpportunities" element={<PageWithLayout><AppliedOpportunities /></PageWithLayout>} />
         <Route path="/CreateOpportunity" element={<PageWithLayout><CreateOpportunity /></PageWithLayout>} />
         <Route path="/MyOpportunities" element={<PageWithLayout><MyOpportunities /></PageWithLayout>} />
+        <Route path="/CreateOffer" element={<PageWithLayout><CreateOffer /></PageWithLayout>} />
+        <Route path="/MyOffers" element={<PageWithLayout><MyOffers /></PageWithLayout>} />
+        <Route path="/MyClaimedOffers" element={<PageWithLayout><MyClaimedOffers /></PageWithLayout>} />
       </Routes>
     </Router>
   );

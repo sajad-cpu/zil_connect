@@ -1,27 +1,8 @@
-import React, { useState } from "react";
-import { opportunityService } from "@/api/services/opportunityService";
 import { applicationService } from "@/api/services/applicationService";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import {
-  Briefcase,
-  Users,
-  Eye,
-  Calendar,
-  Mail,
-  Phone,
-  ExternalLink,
-  FileText,
-  CheckCircle,
-  Clock,
-  XCircle,
-  RefreshCw
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { opportunityService } from "@/api/services/opportunityService";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -29,17 +10,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createPageUrl } from "@/utils";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  Clock,
+  ExternalLink,
+  Eye,
+  FileText,
+  Mail,
+  Phone,
+  RefreshCw,
+  Users,
+  XCircle
+} from "lucide-react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function MyOpportunities() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<string>("all");
   const [isRecalculating, setIsRecalculating] = useState(false);
 
-  const { data: myOpportunities = [], isLoading: loadingOpportunities, refetch: refetchOpportunities } = useQuery({
+  const { data: myOpportunities = [], isLoading: loadingOpportunities, refetch: refetchOpportunities, error: opportunitiesError } = useQuery({
     queryKey: ['my-opportunities'],
     queryFn: () => opportunityService.getMyOpportunities('-created'),
+    enabled: true,
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('MyOpportunities - loadingOpportunities:', loadingOpportunities);
+    console.log('MyOpportunities - myOpportunities:', myOpportunities);
+    console.log('MyOpportunities - opportunitiesError:', opportunitiesError);
+  }, [loadingOpportunities, myOpportunities, opportunitiesError]);
 
   const { data: applicationsReceived = [], isLoading: loadingApplications, refetch } = useQuery({
     queryKey: ['applications-received', selectedOpportunity],
@@ -132,15 +139,26 @@ export default function MyOpportunities() {
                 <p className="text-white/90">Manage your posted opportunities and view applications</p>
               </div>
             </div>
-            <Button
-              onClick={handleRecalculateCounts}
-              disabled={isRecalculating}
-              variant="outline"
-              className="border-white text-white hover:bg-white/10"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isRecalculating ? 'animate-spin' : ''}`} />
-              {isRecalculating ? 'Updating...' : 'Refresh Counts'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => refetchOpportunities()}
+                disabled={loadingOpportunities}
+                variant="outline"
+                className="border-white text-white hover:bg-white/10"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loadingOpportunities ? 'animate-spin' : ''}`} />
+                {loadingOpportunities ? 'Refreshing...' : 'Refresh'}
+              </Button>
+              <Button
+                onClick={handleRecalculateCounts}
+                disabled={isRecalculating}
+                variant="outline"
+                className="border-white text-white hover:bg-white/10"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRecalculating ? 'animate-spin' : ''}`} />
+                {isRecalculating ? 'Updating...' : 'Refresh Counts'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -154,6 +172,23 @@ export default function MyOpportunities() {
 
           {/* My Posted Opportunities */}
           <TabsContent value="opportunities" className="space-y-4">
+            {opportunitiesError && (
+              <Card className="border-red-200 bg-red-50 mb-4">
+                <CardContent className="p-4">
+                  <p className="text-red-700 text-sm">
+                    Error loading opportunities: {opportunitiesError instanceof Error ? opportunitiesError.message : 'Unknown error'}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => refetchOpportunities()}
+                    className="mt-2"
+                  >
+                    Retry
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             {loadingOpportunities ? (
               <div className="text-center py-16">
                 <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -188,8 +223,8 @@ export default function MyOpportunities() {
                             <Badge className={getTypeColor(opp.type)}>
                               {opp.type}
                             </Badge>
-                            <Badge className={opp.status === 'Open' ? 'bg-[#08B150]/10 text-[#08B150]' : 'bg-gray-100 text-gray-600'}>
-                              {opp.status}
+                            <Badge className={(opp.status?.toLowerCase() === 'open' || opp.status === 'Open') ? 'bg-[#08B150]/10 text-[#08B150]' : 'bg-gray-100 text-gray-600'}>
+                              {opp.status || 'open'}
                             </Badge>
                           </div>
                           <h3 className="text-xl font-bold text-[#1E1E1E] mb-2">{opp.title}</h3>
@@ -319,18 +354,25 @@ export default function MyOpportunities() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <p className="text-xs text-[#7C7C7C] mb-1">Company</p>
-                              <p className="font-medium text-[#1E1E1E]">{app.company_name}</p>
+                              <p className="font-medium text-[#1E1E1E]">
+                                {app.expand?.business?.business_name || app.expand?.business?.name || app.company_name || 'N/A'}
+                              </p>
                             </div>
                             <div>
                               <p className="text-xs text-[#7C7C7C] mb-1">Contact Person</p>
-                              <p className="font-medium text-[#1E1E1E]">{app.contact_person}</p>
+                              <p className="font-medium text-[#1E1E1E]">
+                                {app.expand?.applicant?.name || app.expand?.applicant?.username || app.contact_person || 'N/A'}
+                              </p>
                             </div>
                             <div>
                               <p className="text-xs text-[#7C7C7C] mb-1">Email</p>
                               <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-[#318FFD]" />
-                                <a href={`mailto:${app.email}`} className="text-[#318FFD] hover:underline">
-                                  {app.email}
+                                <a
+                                  href={`mailto:${app.expand?.applicant?.email || app.email || ''}`}
+                                  className="text-[#318FFD] hover:underline"
+                                >
+                                  {app.expand?.applicant?.email || app.email || 'N/A'}
                                 </a>
                               </div>
                             </div>
@@ -338,9 +380,13 @@ export default function MyOpportunities() {
                               <p className="text-xs text-[#7C7C7C] mb-1">Phone</p>
                               <div className="flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-[#318FFD]" />
-                                <a href={`tel:${app.phone}`} className="text-[#318FFD] hover:underline">
-                                  {app.phone}
-                                </a>
+                                {app.expand?.business?.phone || app.phone ? (
+                                  <a href={`tel:${app.expand?.business?.phone || app.phone}`} className="text-[#318FFD] hover:underline">
+                                    {app.expand?.business?.phone || app.phone}
+                                  </a>
+                                ) : (
+                                  <span className="text-[#7C7C7C]">N/A</span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -357,17 +403,17 @@ export default function MyOpportunities() {
                           </p>
                         </div>
 
-                        {/* Portfolio */}
-                        {app.portfolio_url && (
+                        {/* Portfolio - from business if available */}
+                        {(app.expand?.business?.website || app.portfolio_url) && (
                           <div className="mb-4">
                             <a
-                              href={app.portfolio_url}
+                              href={app.expand?.business?.website || app.portfolio_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 text-[#318FFD] hover:underline"
                             >
                               <ExternalLink className="w-4 h-4" />
-                              View Portfolio
+                              View {app.expand?.business?.website ? 'Business Website' : 'Portfolio'}
                             </a>
                           </div>
                         )}

@@ -15,6 +15,7 @@ export default defineConfig({
     extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json']
   },
   optimizeDeps: {
+    exclude: ['pocketbase'],
     esbuildOptions: {
       loader: {
         '.js': 'jsx',

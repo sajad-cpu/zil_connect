@@ -1,24 +1,9 @@
 
-import React, { useState } from "react";
 import { businessService } from "@/api/services/businessService";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import {
-  Search,
-  Filter,
-  MapPin,
-  Award,
-  Star,
-  TrendingUp,
-  Eye,
-  ArrowRight,
-  Verified
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -26,12 +11,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createPageUrl } from "@/utils";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  Award,
+  Eye,
+  Filter,
+  MapPin,
+  Search,
+  Star,
+  TrendingUp,
+  Verified
+} from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("all");
-  const [sortBy, setSortBy] = useState("-engagement_score");
+  const [sortBy, setSortBy] = useState("-created");
 
   const { data: businesses = [], isLoading } = useQuery({
     queryKey: ['businesses-all', sortBy],
@@ -54,8 +54,9 @@ export default function Marketplace() {
   ];
 
   const filteredBusinesses = businesses.filter((business) => {
-    const matchesSearch = business.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          business.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const businessName = business.name || business.business_name || '';
+    const matchesSearch = businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      business.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesIndustry = selectedIndustry === "all" || business.industry === selectedIndustry;
     return matchesSearch && matchesIndustry;
   });
@@ -82,14 +83,14 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="bg-gradient-to-r from-[#241C3A] via-[#3C2F63] to-[#241C3A] text-white py-12"
       >
         <div className="max-w-7xl mx-auto px-6">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -97,7 +98,7 @@ export default function Marketplace() {
           >
             Business Marketplace
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
@@ -149,10 +150,10 @@ export default function Marketplace() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="-engagement_score">Most Active</SelectItem>
-                    <SelectItem value="-trust_score">Highest Rated</SelectItem>
-                    <SelectItem value="-profile_views">Most Viewed</SelectItem>
-                    <SelectItem value="-created_date">Newest</SelectItem>
+                    <SelectItem value="-created">Newest</SelectItem>
+                    <SelectItem value="created">Oldest</SelectItem>
+                    <SelectItem value="name">A-Z</SelectItem>
+                    <SelectItem value="-name">Z-A</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -161,7 +162,7 @@ export default function Marketplace() {
         </motion.div>
 
         {/* Results Info */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
@@ -211,7 +212,7 @@ export default function Marketplace() {
                 <Search className="w-16 h-16 text-[#7C7C7C]/30 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-[#1E1E1E] mb-2">No businesses found</h3>
                 <p className="text-[#7C7C7C] mb-6">Try adjusting your search or filters</p>
-                <Button 
+                <Button
                   onClick={() => { setSearchTerm(""); setSelectedIndustry("all"); }}
                   className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
                 >
@@ -221,7 +222,7 @@ export default function Marketplace() {
             </Card>
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -236,7 +237,7 @@ export default function Marketplace() {
               >
                 <Card className="hover:shadow-2xl transition-all duration-300 border-[#E4E7EB] shadow-lg group relative overflow-hidden cursor-pointer">
                   {business.is_boosted && (
-                    <motion.div 
+                    <motion.div
                       initial={{ x: 100 }}
                       animate={{ x: 0 }}
                       transition={{ delay: 0.3 }}
@@ -246,19 +247,19 @@ export default function Marketplace() {
                       Boosted
                     </motion.div>
                   )}
-                  
+
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-3 mb-3">
-                      <motion.div 
+                      <motion.div
                         whileHover={{ rotate: 360 }}
                         transition={{ duration: 0.6 }}
                         className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-2xl shadow-lg"
                       >
-                        {business.business_name?.[0]?.toUpperCase() || 'B'}
+                        {(business.name || business.business_name || 'B')?.[0]?.toUpperCase() || 'B'}
                       </motion.div>
                       <div className="flex-1">
                         <CardTitle className="text-lg group-hover:text-[#6C4DE6] transition-colors duration-300 mb-1">
-                          {business.business_name}
+                          {business.name || business.business_name || 'Business'}
                         </CardTitle>
                         <p className="text-sm text-[#7C7C7C]">{business.industry}</p>
                       </div>
@@ -274,7 +275,7 @@ export default function Marketplace() {
                           </Badge>
                         </motion.div>
                       )}
-                      {business.verified_badges?.slice(0, 2).map((badge, idx) => (
+                      {(business.verified_badges as string[] | undefined)?.slice(0, 2).map((badge: string, idx: number) => (
                         <motion.div key={idx} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                           <Badge variant="outline" className="text-xs border-[#E4E7EB] text-[#7C7C7C]">
                             {badge}
@@ -290,12 +291,12 @@ export default function Marketplace() {
                     </p>
 
                     {/* Location */}
-                    <div className="flex items-center gap-2 text-sm text-[#7C7C7C] mb-4">
-                      <MapPin className="w-4 h-4 text-[#318FFD]" />
-                      <span>
-                        {business.location?.city}, {business.location?.state}
-                      </span>
-                    </div>
+                    {business.location && (
+                      <div className="flex items-center gap-2 text-sm text-[#7C7C7C] mb-4">
+                        <MapPin className="w-4 h-4 text-[#318FFD]" />
+                        <span>{business.location}</span>
+                      </div>
+                    )}
 
                     {/* Stats */}
                     <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-[#F8F9FC] rounded-lg border border-[#E4E7EB]">

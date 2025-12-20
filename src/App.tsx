@@ -1,7 +1,7 @@
-import { Toaster } from "sonner"
 import Pages from "@/pages"
-import './App.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from "sonner"
+import './App.css'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -9,6 +9,12 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      // Don't throw errors by default - let components handle them
+      throwOnError: false,
+    },
+    mutations: {
+      // Don't throw errors by default for mutations either
+      throwOnError: false,
     },
   },
 })

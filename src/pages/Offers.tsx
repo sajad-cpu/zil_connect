@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { offerService } from "@/api/services/offerService";
 import { useQuery } from "@tanstack/react-query";
+import { pb } from "@/api/pocketbaseClient";
 import {
   Tag,
   TrendingUp,
@@ -20,8 +21,9 @@ export default function Offers() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
+  const currentUserId = pb.authStore.model?.id;
 
-  const { data: offers = [], isLoading } = useQuery({
+  const { data: offers = [], isLoading, refetch } = useQuery({
     queryKey: ['offers-all'],
     queryFn: () => offerService.list('-created'),
     initialData: [],
@@ -29,6 +31,11 @@ export default function Offers() {
 
   const featuredOffers = offers.filter(o => o.is_featured).slice(0, 5);
   const regularOffers = offers.filter(o => !o.is_featured);
+
+  // Check if current user created the offer
+  const isMyOffer = (offer: any) => {
+    return offer.created_by === currentUserId;
+  };
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % featuredOffers.length);
@@ -114,14 +121,20 @@ export default function Offers() {
                         <span>{featuredOffers[currentSlide]?.redemptions || 0} businesses redeemed</span>
                       </div>
                     </div>
-                    <Button 
-                      size="lg" 
-                      className="bg-[#08B150] hover:bg-[#06893f] text-white shadow-lg"
-                      onClick={() => handleClaimOffer(featuredOffers[currentSlide])}
-                    >
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      Claim This Offer
-                    </Button>
+                    {!isMyOffer(featuredOffers[currentSlide]) ? (
+                      <Button
+                        size="lg"
+                        className="bg-[#08B150] hover:bg-[#06893f] text-white shadow-lg"
+                        onClick={() => handleClaimOffer(featuredOffers[currentSlide])}
+                      >
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Claim This Offer
+                      </Button>
+                    ) : (
+                      <Badge className="bg-[#6C4DE6] text-white px-6 py-3 text-base">
+                        Your Offer
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -231,13 +244,19 @@ export default function Offers() {
                       </div>
                     </div>
 
-                    <Button 
-                      className="w-full bg-[#08B150] hover:bg-[#06893f] text-white"
-                      onClick={() => handleClaimOffer(offer)}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Claim Offer
-                    </Button>
+                    {!isMyOffer(offer) ? (
+                      <Button
+                        className="w-full bg-[#08B150] hover:bg-[#06893f] text-white"
+                        onClick={() => handleClaimOffer(offer)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Claim Offer
+                      </Button>
+                    ) : (
+                      <Badge className="w-full justify-center bg-[#6C4DE6] text-white py-3">
+                        Your Offer
+                      </Badge>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -247,13 +266,17 @@ export default function Offers() {
       </div>
 
       {/* Claim Modal */}
-      <OfferClaimModal 
-        offer={selectedOffer} 
-        open={claimModalOpen} 
+      <OfferClaimModal
+        offer={selectedOffer}
+        open={claimModalOpen}
         onClose={() => {
           setClaimModalOpen(false);
           setSelectedOffer(null);
-        }} 
+        }}
+        onClaimSuccess={() => {
+          // Refetch offers to update redemption counts
+          refetch();
+        }}
       />
     </div>
   );

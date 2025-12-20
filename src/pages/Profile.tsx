@@ -33,6 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ServicesTab from "@/components/profile/ServicesTab";
+import PortfolioTab from "@/components/portfolio/PortfolioTab";
+import BadgesTab from "@/components/badges/BadgesTab";
 
 export default function Profile() {
   const [showSetupForm, setShowSetupForm] = useState(false);
@@ -517,54 +520,12 @@ export default function Profile() {
 
           {/* Services Tab */}
           <TabsContent value="services">
-            <Card className="border-none shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Services Offered</CardTitle>
-                  <Button size="sm">Add Service</Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {(!business?.services || business.services.length === 0) ? (
-                  <div className="text-center py-12">
-                    <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No services added yet</h3>
-                    <p className="text-gray-600 mb-4">Add your services to help partners find you</p>
-                    <Button>Add Your First Service</Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {business.services.map((service, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="p-4">
-                          <p className="font-medium">{service}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ServicesTab businessId={business.id} isOwner={true} />
           </TabsContent>
 
           {/* Portfolio Tab */}
           <TabsContent value="portfolio">
-            <Card className="border-none shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Portfolio</CardTitle>
-                  <Button size="sm">Add Project</Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Camera className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Showcase your work</h3>
-                  <p className="text-gray-600 mb-4">Add projects to demonstrate your expertise</p>
-                  <Button>Add Your First Project</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <PortfolioTab businessId={business.id} isOwner={true} />
           </TabsContent>
 
           {/* Reviews Tab */}
@@ -585,22 +546,7 @@ export default function Profile() {
 
           {/* Badges Tab */}
           <TabsContent value="badges">
-            <Card className="border-none shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Trust Badges & Certifications</CardTitle>
-                  <Button size="sm">Add Certification</Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Build credibility</h3>
-                  <p className="text-gray-600 mb-4">Add certifications and badges to stand out</p>
-                  <Button>Get Verified</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <BadgesTab businessId={business.id} isOwner={true} />
           </TabsContent>
         </Tabs>
       </div>
