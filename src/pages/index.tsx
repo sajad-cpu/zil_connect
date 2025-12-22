@@ -1,33 +1,46 @@
+import { pb } from "@/api/pocketbaseClient";
 import React, { useEffect } from 'react';
-import Layout from "./Layout";
-import Home from "./Home";
-import Marketplace from "./Marketplace";
-import Opportunities from "./Opportunities";
-import Search from "./Search";
-import Offers from "./Offers";
-import Events from "./Events";
-import Community from "./Community";
-import Knowledge from "./Knowledge";
+import LoadingScreen from "../components/LoadingScreen";
+import AdminLogin from "./Admin/AdminLogin";
+import AdminAnalytics from "./Admin/Analytics";
+import AdminBusinesses from "./Admin/Businesses";
+import AdminCommissions from "./Admin/Commissions";
+import AdminDashboard from "./Admin/Dashboard";
+import AdminEnrollments from "./Admin/Enrollments";
+import AdminFintechProducts from "./Admin/FintechProducts";
+import AdminMessages from "./Admin/Messages";
+import AdminOffers from "./Admin/Offers";
+import AdminOpportunities from "./Admin/Opportunities";
+import AdminSettings from "./Admin/Settings";
+import AdminUsers from "./Admin/Users";
 import Analytics from "./Analytics";
-import Profile from "./Profile";
-import Settings from "./Settings";
-import Invitations from "./Invitations";
-import Connected from "./Connected";
-import BusinessDetails from "./BusinessDetails";
-import OpportunityApply from "./OpportunityApply";
-import CourseDetails from "./CourseDetails";
-import ModuleLessons from "./ModuleLessons";
-import OpportunityDetails from "./OpportunityDetails";
 import AppliedOpportunities from "./AppliedOpportunities";
-import CreateOpportunity from "./CreateOpportunity";
-import MyOpportunities from "./MyOpportunities";
+import BusinessDetails from "./BusinessDetails";
+import Community from "./Community";
+import Connected from "./Connected";
+import CourseDetails from "./CourseDetails";
 import CreateOffer from "./CreateOffer";
-import MyOffers from "./MyOffers";
+import CreateOpportunity from "./CreateOpportunity";
+import Events from "./Events";
+import FintechMarketplace from "./FintechMarketplace";
+import Home from "./Home";
+import Invitations from "./Invitations";
+import Knowledge from "./Knowledge";
+import Layout from "./Layout";
+import Marketplace from "./Marketplace";
+import ModuleLessons from "./ModuleLessons";
 import MyClaimedOffers from "./MyClaimedOffers";
+import MyOffers from "./MyOffers";
+import MyOpportunities from "./MyOpportunities";
+import Offers from "./Offers";
+import Opportunities from "./Opportunities";
+import OpportunityApply from "./OpportunityApply";
+import OpportunityDetails from "./OpportunityDetails";
+import Profile from "./Profile";
+import Search from "./Search";
+import Settings from "./Settings";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
-import LoadingScreen from "../components/LoadingScreen";
-import { pb } from "@/api/pocketbaseClient";
 
 import { Route, BrowserRouter as Router, Routes, useLocation, useNavigate } from 'react-router-dom';
 
@@ -56,6 +69,7 @@ const PAGES: Record<string, any> = {
   CreateOffer: CreateOffer,
   MyOffers: MyOffers,
   MyClaimedOffers: MyClaimedOffers,
+  FintechMarketplace: FintechMarketplace,
   SignIn: SignIn,
   SignUp: SignUp,
 }
@@ -140,6 +154,21 @@ export default function Pages() {
         <Route path="/CreateOffer" element={<PageWithLayout><CreateOffer /></PageWithLayout>} />
         <Route path="/MyOffers" element={<PageWithLayout><MyOffers /></PageWithLayout>} />
         <Route path="/MyClaimedOffers" element={<PageWithLayout><MyClaimedOffers /></PageWithLayout>} />
+        <Route path="/FintechMarketplace" element={<PageWithLayout><FintechMarketplace /></PageWithLayout>} />
+
+        {/* Admin routes - NO regular layout, uses AdminLayout */}
+        <Route path="/AdminLogin" element={<AdminLogin />} />
+        <Route path="/Admin" element={<AdminDashboard />} />
+        <Route path="/allusers" element={<AdminUsers />} />
+        <Route path="/AdminBusinesses" element={<AdminBusinesses />} />
+        <Route path="/AdminOpportunities" element={<AdminOpportunities />} />
+        <Route path="/AdminOffers" element={<AdminOffers />} />
+        <Route path="/AdminMessages" element={<AdminMessages />} />
+        <Route path="/AdminFintechProducts" element={<AdminFintechProducts />} />
+        <Route path="/AdminEnrollments" element={<AdminEnrollments />} />
+        <Route path="/AdminCommissions" element={<AdminCommissions />} />
+        <Route path="/AdminAnalytics" element={<AdminAnalytics />} />
+        <Route path="/AdminSettings" element={<AdminSettings />} />
       </Routes>
     </Router>
   );

@@ -23,17 +23,31 @@ export const opportunityService = {
   async filter(filters: Record<string, any>, sortBy: string = '-created', limit: number = 50) {
     try {
       const filterString = Object.entries(filters)
-        .map(([key, value]) => `${key}="${value}"`)
+        .map(([key, value]) => {
+          // Handle case-insensitive status filter
+          if (key === 'status' && typeof value === 'string') {
+            return `${key}="${value.toLowerCase()}"`;
+          }
+          return `${key}="${value}"`;
+        })
         .join(' && ');
+
+      console.log('Filtering opportunities with:', filterString);
 
       const records = await pb.collection('opportunities').getList(1, limit, {
         sort: sortBy,
         filter: filterString || undefined,
-        expand: 'business'
+        expand: 'business,created_by'
       });
+
+      console.log('Found opportunities:', records.items.length);
       return records.items;
     } catch (error: any) {
       console.error('Error filtering opportunities:', error);
+      if (error.response) {
+        console.error('Error response:', error.response);
+        console.error('Error data:', error.response.data);
+      }
       return [];
     }
   },

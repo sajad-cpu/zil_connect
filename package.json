@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build && cp _redirects dist/",
     "lint": "eslint .",
-    "preview": "vite preview --host 0.0.0.0 --port $PORT"
+    "preview": "vite preview --host 0.0.0.0 --port $PORT",
+    "seed:fintech": "node scripts/seed-fintech-products-example.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.1.2",

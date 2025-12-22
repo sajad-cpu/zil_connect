@@ -1,30 +1,13 @@
-import React, { useState } from "react";
-import { businessService } from "@/api/services/businessService";
-import { useQuery } from "@tanstack/react-query";
 import { pb } from "@/api/pocketbaseClient";
-import { toast } from "sonner";
-import {
-  User,
-  Building2,
-  MapPin,
-  Mail,
-  Phone,
-  Globe,
-  Award,
-  Star,
-  TrendingUp,
-  Eye,
-  Users,
-  Edit,
-  Camera,
-  Plus
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { businessService } from "@/api/services/businessService";
+import BadgesTab from "@/components/badges/BadgesTab";
+import PortfolioTab from "@/components/portfolio/PortfolioTab";
+import EnrollmentsTab from "@/components/profile/EnrollmentsTab";
+import ServicesTab from "@/components/profile/ServicesTab";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -33,9 +16,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ServicesTab from "@/components/profile/ServicesTab";
-import PortfolioTab from "@/components/portfolio/PortfolioTab";
-import BadgesTab from "@/components/badges/BadgesTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Award,
+  Building2,
+  Camera,
+  Edit,
+  Eye,
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  Star,
+  TrendingUp,
+  Users
+} from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "sonner";
 
 export default function Profile() {
   const [showSetupForm, setShowSetupForm] = useState(false);
@@ -58,6 +58,17 @@ export default function Profile() {
     initialData: null,
     staleTime: 0, // Always refetch when component mounts
     refetchOnMount: true,
+  });
+
+  const { data: profileCompletion } = useQuery({
+    queryKey: ['profile-completion', business?.id],
+    queryFn: async () => {
+      const { getProfileCompletionData, calculateProfileCompletion } = await import("@/utils/profileCompletion");
+      const data = await getProfileCompletionData();
+      return calculateProfileCompletion(data);
+    },
+    enabled: true,
+    staleTime: 30000,
   });
 
   // Pre-fill form when editing existing business
@@ -194,14 +205,14 @@ export default function Profile() {
                       id="business_name"
                       required
                       value={formData.business_name}
-                      onChange={(e) => setFormData({...formData, business_name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
                       className="border-[#E4E7EB]"
                       placeholder="Your Business Inc."
                     />
                   </div>
                   <div>
                     <Label htmlFor="industry" className="text-[#1E1E1E]">Industry *</Label>
-                    <Select value={formData.industry} onValueChange={(value) => setFormData({...formData, industry: value})}>
+                    <Select value={formData.industry} onValueChange={(value) => setFormData({ ...formData, industry: value })}>
                       <SelectTrigger className="border-[#E4E7EB]">
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
@@ -224,7 +235,7 @@ export default function Profile() {
                   <Input
                     id="tagline"
                     value={formData.tagline}
-                    onChange={(e) => setFormData({...formData, tagline: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
                     className="border-[#E4E7EB]"
                     placeholder="A brief description of what you do"
                   />
@@ -237,7 +248,7 @@ export default function Profile() {
                     required
                     rows={4}
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="border-[#E4E7EB]"
                     placeholder="Tell us about your business..."
                   />
@@ -250,7 +261,7 @@ export default function Profile() {
                       id="city"
                       required
                       value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="border-[#E4E7EB]"
                       placeholder="San Francisco"
                     />
@@ -261,7 +272,7 @@ export default function Profile() {
                       id="state"
                       required
                       value={formData.state}
-                      onChange={(e) => setFormData({...formData, state: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                       className="border-[#E4E7EB]"
                       placeholder="CA"
                     />
@@ -276,7 +287,7 @@ export default function Profile() {
                       type="email"
                       required
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="border-[#E4E7EB]"
                       placeholder="hello@yourbusiness.com"
                     />
@@ -288,7 +299,7 @@ export default function Profile() {
                       type="tel"
                       required
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="border-[#E4E7EB]"
                       placeholder="+1-555-0123"
                     />
@@ -301,7 +312,7 @@ export default function Profile() {
                     id="website"
                     type="url"
                     value={formData.website}
-                    onChange={(e) => setFormData({...formData, website: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                     className="border-[#E4E7EB]"
                     placeholder="https://yourbusiness.com"
                   />
@@ -465,32 +476,55 @@ export default function Profile() {
         </Card>
 
         {/* Profile Completion Alert */}
-        <Card className="border-none shadow-lg mb-8 bg-gradient-to-r from-yellow-50 to-orange-50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                <Award className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 text-lg mb-2">🚀 Complete Your Profile</h3>
-                <p className="text-gray-700 mb-4">
-                  Your profile is <strong>30% complete</strong>. Add more information to increase visibility and build trust with potential partners.
-                </p>
-                <div className="flex gap-3">
-                  <Button size="sm" className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
-                    Get Verified
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    Add Portfolio
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    Add Certifications
-                  </Button>
+        {profileCompletion && profileCompletion.percentage < 100 && (
+          <Card className="border-none shadow-lg mb-8 bg-gradient-to-r from-yellow-50 to-orange-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2">🚀 Complete Your Profile</h3>
+                  <p className="text-gray-700 mb-2">
+                    Your profile is <strong>{profileCompletion.percentage}% complete</strong> ({profileCompletion.completed}/{profileCompletion.total} fields). Add more information to increase visibility and build trust with potential partners.
+                  </p>
+                  {profileCompletion.missingFields.length > 0 && (
+                    <p className="text-sm text-gray-600 mb-4">
+                      Missing: {profileCompletion.missingFields.join(", ")}
+                      {profileCompletion.missingFields.length >= 5 && "..."}
+                    </p>
+                  )}
+                  <div className="flex gap-3 flex-wrap">
+                    {!business?.is_verified && (
+                      <Button size="sm" className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600" onClick={handleEditClick}>
+                        Get Verified
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const tabsElement = document.querySelector('[value="portfolio"]');
+                      if (tabsElement) {
+                        (tabsElement as HTMLElement).click();
+                      }
+                    }}>
+                      Add Portfolio
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const tabsElement = document.querySelector('[value="badges"]');
+                      if (tabsElement) {
+                        (tabsElement as HTMLElement).click();
+                      }
+                    }}>
+                      Add Certifications
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleEditClick}>
+                      Edit Profile
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="about" className="space-y-6">
@@ -500,6 +534,7 @@ export default function Profile() {
             <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="badges">Badges & Certifications</TabsTrigger>
+            <TabsTrigger value="enrollments">My Enrollments</TabsTrigger>
           </TabsList>
 
           {/* About Tab */}
@@ -547,6 +582,11 @@ export default function Profile() {
           {/* Badges Tab */}
           <TabsContent value="badges">
             <BadgesTab businessId={business.id} isOwner={true} />
+          </TabsContent>
+
+          {/* Enrollments Tab */}
+          <TabsContent value="enrollments">
+            <EnrollmentsTab userId={pb.authStore.model?.id} />
           </TabsContent>
         </Tabs>
       </div>

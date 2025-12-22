@@ -1,6 +1,7 @@
 
 import { pb } from "@/api/pocketbaseClient";
 import { businessService } from "@/api/services/businessService";
+import { fintechProductService } from "@/api/services/fintechProductService";
 import { offerService } from "@/api/services/offerService";
 import { opportunityService } from "@/api/services/opportunityService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -16,9 +17,12 @@ import {
   ArrowRight,
   Award,
   Briefcase,
+  Building2,
+  Calculator,
   Calendar,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   Eye,
   Heart,
   Sparkles,
@@ -36,6 +40,9 @@ import OfferClaimModal from "../components/OfferClaimModal";
 import OnboardingModal from "../components/OnboardingModal";
 import ParallaxSection from "../components/ParallaxSection";
 import ScrollReveal from "../components/ScrollReveal";
+import EnrollmentModal from "../components/marketplace/EnrollmentModal";
+import ProductCard from "../components/marketplace/ProductCard";
+import ProductModal from "../components/marketplace/ProductModal";
 
 export default function Home() {
   // Authentication is now handled by Layout component
@@ -44,6 +51,9 @@ export default function Home() {
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [enrollmentModalOpen, setEnrollmentModalOpen] = useState(false);
   const carouselRef = useRef<HTMLElement | null>(null);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,7 +69,20 @@ export default function Home() {
 
   const { data: opportunities = [] } = useQuery({
     queryKey: ['opportunities-recent'],
-    queryFn: () => opportunityService.filter({ status: 'Open' }, '-created', 4),
+    queryFn: async () => {
+      // Try to get open opportunities first
+      let result = await opportunityService.filter({ status: 'open' }, '-created', 4);
+
+      // If no open opportunities, get the latest ones regardless of status
+      if (result.length === 0) {
+        console.log('No open opportunities found, fetching latest opportunities...');
+        result = await opportunityService.list('-created');
+        result = result.slice(0, 4); // Limit to 4
+      }
+
+      console.log('Home page - opportunities fetched:', result.length, result);
+      return result;
+    },
     initialData: [],
   });
 
@@ -68,6 +91,13 @@ export default function Home() {
     queryFn: () => offerService.filter({ is_featured: true }, '-created', 5),
     initialData: [],
   });
+
+  const { data: featuredProducts = [] } = useQuery({
+    queryKey: ['fintech-products-featured'],
+    queryFn: () => fintechProductService.getFeatured(8),
+    initialData: [],
+  });
+
 
   // Get real counts from database
   const { data: businessCount = 0 } = useQuery({
@@ -170,7 +200,17 @@ export default function Home() {
     { label: "Total Connections", value: connectionCount.toLocaleString(), icon: Users, gradient: "from-green-500 to-emerald-500" },
   ];
 
-  const profileCompletion = 45;
+  const { data: profileCompletionData } = useQuery({
+    queryKey: ['profile-completion'],
+    queryFn: async () => {
+      const { getProfileCompletionData, calculateProfileCompletion } = await import("@/utils/profileCompletion");
+      const data = await getProfileCompletionData();
+      return calculateProfileCompletion(data);
+    },
+    staleTime: 30000,
+  });
+
+  const profileCompletion = profileCompletionData?.percentage || 0;
   const isProfileIncomplete = profileCompletion < 100;
 
   const nextOffer = () => {
@@ -280,40 +320,114 @@ export default function Home() {
                   </Link>
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" asChild className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 border border-white/30">
-                  <Link to={createPageUrl("Opportunities")}>
-                    View Opportunities
-                  </Link>
-                </Button>
-              </motion.div>
             </motion.div>
           </div>
         </div>
       </motion.section>
 
       {/* Profile Completion Alert */}
-      {isProfileIncomplete && (
+      {isProfileIncomplete && profileCompletionData && (
         <ScrollReveal delay={0.2}>
           <section className="max-w-7xl mx-auto px-6 -mt-8 relative z-10">
             <Alert className="border-[#318FFD] bg-white shadow-xl">
               <AlertCircle className="h-5 w-5 text-[#318FFD]" />
-              <AlertDescription className="ml-2 flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-[#1E1E1E]">Your profile is {profileCompletion}% complete.</span>
-                  <span className="text-[#7C7C7C] ml-2">Complete it now to unlock more opportunities and boost your visibility!</span>
+              <AlertDescription className="ml-2">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex-1">
+                    <span className="font-semibold text-[#1E1E1E]">Your profile is {profileCompletion}% complete.</span>
+                    <span className="text-[#7C7C7C] ml-2">Complete it now to unlock more opportunities and boost your visibility!</span>
+                  </div>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button asChild size="sm" className="bg-[#6C4DE6] hover:bg-[#593CC9] transition-all duration-300">
+                      <Link to={createPageUrl("Profile")}>
+                        Complete Profile
+                      </Link>
+                    </Button>
+                  </motion.div>
                 </div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button asChild size="sm" className="bg-[#6C4DE6] hover:bg-[#593CC9] ml-4 transition-all duration-300">
-                    <Link to={createPageUrl("Profile")}>
-                      Complete Profile
-                    </Link>
-                  </Button>
-                </motion.div>
               </AlertDescription>
             </Alert>
           </section>
         </ScrollReveal>
+      )}
+
+      {/* Fintech Marketplace Section */}
+      {featuredProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 py-12">
+          <ScrollReveal>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-[#1E1E1E] mb-2 flex items-center gap-2">
+                  <CreditCard className="w-8 h-8 text-[#6C4DE6]" />
+                  Fintech Marketplace
+                </h2>
+                <p className="text-[#7C7C7C]">Essential tools for your business • QuickBooks, Stripe, and more</p>
+              </div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
+                  <Link to={createPageUrl("FintechMarketplace")}>
+                    Explore All <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
+          </ScrollReveal>
+
+          <MilestoneMarker icon={CreditCard} gradient="from-green-500 to-emerald-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.slice(0, 8).map((product: any, index: number) => (
+                <ScrollReveal key={product.id} delay={index * 0.1}>
+                  <ProductCard
+                    product={product}
+                    onEnroll={(p) => {
+                      setSelectedProduct(p);
+                      setEnrollmentModalOpen(true);
+                    }}
+                    onView={(p) => {
+                      setSelectedProduct(p);
+                      setProductModalOpen(true);
+                    }}
+                  />
+                </ScrollReveal>
+              ))}
+            </div>
+
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
+                  <CardContent className="p-4 text-center">
+                    <Calculator className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-[#1E1E1E]">Accounting</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
+                  <CardContent className="p-4 text-center">
+                    <CreditCard className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-[#1E1E1E]">Payments</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
+                  <CardContent className="p-4 text-center">
+                    <Building2 className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-[#1E1E1E]">Banking</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
+                  <CardContent className="p-4 text-center">
+                    <TrendingUp className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-[#1E1E1E]">Analytics</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          </MilestoneMarker>
+        </section>
       )}
 
       {/* Stats Section with Milestone */}
@@ -722,48 +836,63 @@ export default function Home() {
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {opportunities.map((opp, index) => (
-              <ScrollReveal key={opp.id} delay={index * 0.15} direction="left">
-                <motion.div
-                  whileHover={{ scale: 1.02, x: 8 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="hover:shadow-xl transition-all duration-300 border-[#E4E7EB] shadow-lg cursor-pointer">
-                    <CardHeader>
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge className="bg-[#7E57C2]/10 text-[#7E57C2] border-[#7E57C2]/20">
-                          {opp.type}
-                        </Badge>
-                        <span className="text-xs text-[#7C7C7C]">
-                          {new Date(opp.created_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <CardTitle className="text-xl text-[#1E1E1E] hover:text-[#6C4DE6] transition-colors">
-                        {opp.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-[#7C7C7C] mb-4 line-clamp-2">{opp.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-[#7C7C7C]">
-                          <span>📍 {opp.location}</span>
-                          <span>💰 {opp.budget_range}</span>
+          {opportunities.length === 0 ? (
+            <Card className="text-center py-12 border-[#E4E7EB]">
+              <CardContent>
+                <Briefcase className="w-20 h-20 text-[#7C7C7C]/30 mx-auto mb-6" />
+                <h3 className="text-xl font-semibold text-[#1E1E1E] mb-2">No Opportunities Available</h3>
+                <p className="text-[#7C7C7C] mb-6">Check back later for new opportunities</p>
+                <Button asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white">
+                  <Link to={createPageUrl("Opportunities")}>
+                    Browse All Opportunities
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {opportunities.map((opp, index) => (
+                <ScrollReveal key={opp.id} delay={index * 0.15} direction="left">
+                  <motion.div
+                    whileHover={{ scale: 1.02, x: 8 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="hover:shadow-xl transition-all duration-300 border-[#E4E7EB] shadow-lg cursor-pointer">
+                      <CardHeader>
+                        <div className="flex items-start justify-between mb-2">
+                          <Badge className="bg-[#7E57C2]/10 text-[#7E57C2] border-[#7E57C2]/20">
+                            {opp.type}
+                          </Badge>
+                          <span className="text-xs text-[#7C7C7C]">
+                            {opp.created ? new Date(opp.created).toLocaleDateString() : 'N/A'}
+                          </span>
                         </div>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                          <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white">
-                            <Link to={createPageUrl("OpportunityApply") + `?id=${opp.id}`}>
-                              Apply Now
-                            </Link>
-                          </Button>
-                        </motion.div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </ScrollReveal>
-            ))}
-          </div>
+                        <CardTitle className="text-xl text-[#1E1E1E] hover:text-[#6C4DE6] transition-colors">
+                          {opp.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-[#7C7C7C] mb-4 line-clamp-2">{opp.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm text-[#7C7C7C]">
+                            <span>📍 {opp.location || 'Remote'}</span>
+                            <span>💰 {opp.budget || 'TBD'}</span>
+                          </div>
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white">
+                              <Link to={createPageUrl("OpportunityDetails") + `?id=${opp.id}`}>
+                                View Details
+                              </Link>
+                            </Button>
+                          </motion.div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </ScrollReveal>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -835,6 +964,34 @@ export default function Home() {
         }}
         onClaimSuccess={() => {
           // Optionally refetch offers or show success message
+        }}
+      />
+
+      {/* Product Modal */}
+      <ProductModal
+        open={productModalOpen}
+        onClose={() => {
+          setProductModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+        onEnroll={(product) => {
+          setProductModalOpen(false);
+          setSelectedProduct(product);
+          setEnrollmentModalOpen(true);
+        }}
+      />
+
+      {/* Enrollment Modal */}
+      <EnrollmentModal
+        open={enrollmentModalOpen}
+        onClose={() => {
+          setEnrollmentModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+        onSuccess={() => {
+          // Refetch products to update enrollment counts
         }}
       />
     </div>

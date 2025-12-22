@@ -1,0 +1,660 @@
+[
+  {
+    "id": "fintech_products_collection",
+    "name": "fintech_products",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "name_field",
+        "name": "name",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 255
+        }
+      },
+      {
+        "id": "description_field",
+        "name": "description",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": null
+        }
+      },
+      {
+        "id": "category_field",
+        "name": "category",
+        "type": "select",
+        "system": false,
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Accounting Software",
+            "Payment Processing",
+            "Business Banking",
+            "Tax Software",
+            "Payroll Services",
+            "Invoicing Tools",
+            "Expense Management",
+            "Business Analytics"
+          ]
+        }
+      },
+      {
+        "id": "provider_field",
+        "name": "provider",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 255
+        }
+      },
+      {
+        "id": "logo_field",
+        "name": "logo",
+        "type": "file",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "mimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/svg+xml",
+            "image/gif",
+            "image/webp"
+          ],
+          "thumbs": [
+            "200x200"
+          ]
+        }
+      },
+      {
+        "id": "pricing_type_field",
+        "name": "pricing_type",
+        "type": "select",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Free",
+            "Freemium",
+            "Paid",
+            "Subscription"
+          ]
+        }
+      },
+      {
+        "id": "pricing_info_field",
+        "name": "pricing_info",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 500
+        }
+      },
+      {
+        "id": "enrollment_url_field",
+        "name": "enrollment_url",
+        "type": "url",
+        "system": false,
+        "required": true,
+        "options": {
+          "exceptDomains": null,
+          "onlyDomains": null
+        }
+      },
+      {
+        "id": "affiliate_id_field",
+        "name": "affiliate_id",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 255
+        }
+      },
+      {
+        "id": "commission_type_field",
+        "name": "commission_type",
+        "type": "select",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Percentage",
+            "Fixed Amount",
+            "Recurring"
+          ]
+        }
+      },
+      {
+        "id": "commission_value_field",
+        "name": "commission_value",
+        "type": "number",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": null
+        }
+      },
+      {
+        "id": "is_featured_field",
+        "name": "is_featured",
+        "type": "bool",
+        "system": false,
+        "required": false,
+        "options": {}
+      },
+      {
+        "id": "is_active_field",
+        "name": "is_active",
+        "type": "bool",
+        "system": false,
+        "required": false,
+        "options": {}
+      },
+      {
+        "id": "tags_field",
+        "name": "tags",
+        "type": "json",
+        "system": false,
+        "required": false,
+        "options": {}
+      },
+      {
+        "id": "integration_type_field",
+        "name": "integration_type",
+        "type": "select",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "API",
+            "OAuth",
+            "Manual",
+            "Link"
+          ]
+        }
+      },
+      {
+        "id": "created_by_field",
+        "name": "created_by",
+        "type": "relation",
+        "system": false,
+        "required": false,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "username",
+            "email"
+          ]
+        }
+      },
+      {
+        "id": "views_field",
+        "name": "views",
+        "type": "number",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": null
+        }
+      },
+      {
+        "id": "enrollments_field",
+        "name": "enrollments",
+        "type": "number",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": null
+        }
+      },
+      {
+        "id": "order_field",
+        "name": "order",
+        "type": "number",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": null
+        }
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_category",
+        "columns": [
+          "category"
+        ]
+      },
+      {
+        "name": "idx_is_featured",
+        "columns": [
+          "is_featured"
+        ]
+      },
+      {
+        "name": "idx_is_active",
+        "columns": [
+          "is_active"
+        ]
+      }
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
+  },
+  {
+    "id": "product_enrollments_collection",
+    "name": "product_enrollments",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "user_field",
+        "name": "user",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "username",
+            "email"
+          ]
+        }
+      },
+      {
+        "id": "business_field",
+        "name": "business",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "businesses_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "business_name",
+            "name"
+          ]
+        }
+      },
+      {
+        "id": "product_field",
+        "name": "product",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "fintech_products_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "name"
+          ]
+        }
+      },
+      {
+        "id": "enrollment_date_field",
+        "name": "enrollment_date",
+        "type": "date",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "id": "status_field",
+        "name": "status",
+        "type": "select",
+        "system": false,
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Pending",
+            "Completed",
+            "Active",
+            "Cancelled"
+          ]
+        }
+      },
+      {
+        "id": "enrollment_method_field",
+        "name": "enrollment_method",
+        "type": "select",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Direct Link",
+            "API",
+            "OAuth"
+          ]
+        }
+      },
+      {
+        "id": "external_id_field",
+        "name": "external_id",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 255
+        }
+      },
+      {
+        "id": "commission_earned_field",
+        "name": "commission_earned",
+        "type": "number",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": null
+        }
+      },
+      {
+        "id": "commission_status_field",
+        "name": "commission_status",
+        "type": "select",
+        "system": false,
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Pending",
+            "Paid",
+            "Cancelled"
+          ]
+        }
+      },
+      {
+        "id": "commission_paid_date_field",
+        "name": "commission_paid_date",
+        "type": "date",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "id": "notes_field",
+        "name": "notes",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null
+        }
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_user",
+        "columns": [
+          "user"
+        ]
+      },
+      {
+        "name": "idx_business",
+        "columns": [
+          "business"
+        ]
+      },
+      {
+        "name": "idx_product",
+        "columns": [
+          "product"
+        ]
+      },
+      {
+        "name": "idx_status",
+        "columns": [
+          "status"
+        ]
+      }
+    ],
+    "listRule": "user = @request.auth.id || business.owner = @request.auth.id",
+    "viewRule": "user = @request.auth.id || business.owner = @request.auth.id",
+    "createRule": "user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "commission_transactions_collection",
+    "name": "commission_transactions",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "enrollment_field",
+        "name": "enrollment",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "product_enrollments_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": []
+        }
+      },
+      {
+        "id": "product_field",
+        "name": "product",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "fintech_products_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "name"
+          ]
+        }
+      },
+      {
+        "id": "business_field",
+        "name": "business",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "businesses_collection",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "business_name",
+            "name"
+          ]
+        }
+      },
+      {
+        "id": "user_field",
+        "name": "user",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1,
+          "displayFields": [
+            "username",
+            "email"
+          ]
+        }
+      },
+      {
+        "id": "amount_field",
+        "name": "amount",
+        "type": "number",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": 0,
+          "max": null
+        }
+      },
+      {
+        "id": "commission_type_field",
+        "name": "commission_type",
+        "type": "select",
+        "system": false,
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "One-time",
+            "Recurring",
+            "Monthly",
+            "Annual"
+          ]
+        }
+      },
+      {
+        "id": "status_field",
+        "name": "status",
+        "type": "select",
+        "system": false,
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Pending",
+            "Approved",
+            "Paid",
+            "Cancelled"
+          ]
+        }
+      },
+      {
+        "id": "transaction_date_field",
+        "name": "transaction_date",
+        "type": "date",
+        "system": false,
+        "required": true,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "id": "paid_date_field",
+        "name": "paid_date",
+        "type": "date",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "id": "payment_reference_field",
+        "name": "payment_reference",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": 255
+        }
+      },
+      {
+        "id": "notes_field",
+        "name": "notes",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null
+        }
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_enrollment",
+        "columns": [
+          "enrollment"
+        ]
+      },
+      {
+        "name": "idx_product",
+        "columns": [
+          "product"
+        ]
+      },
+      {
+        "name": "idx_user",
+        "columns": [
+          "user"
+        ]
+      },
+      {
+        "name": "idx_status",
+        "columns": [
+          "status"
+        ]
+      },
+      {
+        "name": "idx_transaction_date",
+        "columns": [
+          "transaction_date"
+        ]
+      }
+    ],
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
+  }
+]

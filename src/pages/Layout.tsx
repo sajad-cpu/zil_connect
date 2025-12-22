@@ -47,7 +47,8 @@ interface LayoutProps {
 const navigationItems = [
   { title: "Home", url: createPageUrl("Home"), icon: Home },
   { title: "Search", url: createPageUrl("Search"), icon: Search },
-  // { title: "Marketplace", url: createPageUrl("Marketplace"), icon: ShoppingBag },
+  // { title: "Marketplace", url: createPageUrl("Marketplace"), icon: Package },
+  // { title: "Fintech Marketplace", url: createPageUrl("FintechMarketplace"), icon: CreditCard },
   { title: "Opportunities", url: createPageUrl("Opportunities"), icon: Briefcase },
   { title: "Offers", url: createPageUrl("Offers"), icon: Tag },
   // { title: "Events", url: createPageUrl("Events"), icon: Calendar },
