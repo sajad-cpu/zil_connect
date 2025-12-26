@@ -183,8 +183,8 @@ export default function AdminFintechProducts() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Fintech Products</h1>
-            <p className="text-gray-600 mt-1">Manage fintech marketplace products</p>
+            <h1 className="text-3xl font-bold text-gray-900">Business Tools</h1>
+            <p className="text-gray-600 mt-1">Manage business tools marketplace</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -210,7 +210,7 @@ export default function AdminFintechProducts() {
                   {selectedProduct ? "Edit Product" : "Add New Product"}
                 </DialogTitle>
                 <DialogDescription>
-                  {selectedProduct ? "Update product information" : "Create a new fintech product"}
+                  {selectedProduct ? "Update product information" : "Create a new business tool"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">

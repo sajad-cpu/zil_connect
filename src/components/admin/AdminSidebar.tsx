@@ -25,7 +25,7 @@ const adminMenuItems = [
   { title: "Opportunities", url: createPageUrl("AdminOpportunities"), icon: Briefcase },
   { title: "Offers", url: createPageUrl("AdminOffers"), icon: Tag },
   { title: "Messages", url: createPageUrl("AdminMessages"), icon: MessageSquare },
-  { title: "Fintech Products", url: createPageUrl("AdminFintechProducts"), icon: CreditCard },
+  { title: "Business Tools", url: createPageUrl("AdminFintechProducts"), icon: CreditCard },
   { title: "Enrollments", url: createPageUrl("AdminEnrollments"), icon: TrendingUp },
   { title: "Commissions", url: createPageUrl("AdminCommissions"), icon: BarChart3 },
   { title: "Analytics", url: createPageUrl("AdminAnalytics"), icon: BarChart3 },

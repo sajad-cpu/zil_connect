@@ -1,6 +1,7 @@
 import { pb } from "@/api/pocketbaseClient";
 import { businessService } from "@/api/services/businessService";
 import { connectionService } from "@/api/services/connectionService";
+import { BusinessCardSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -355,8 +356,13 @@ export default function Search() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {businesses.map((business: any) => (
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <BusinessCardSkeleton count={6} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {businesses.map((business: any) => (
                 <Link key={business.id} to={createPageUrl("BusinessDetails") + `?id=${business.id}`}>
                   <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-[#E4E7EB] shadow-lg group cursor-pointer">
                     <CardHeader>
@@ -460,7 +466,8 @@ export default function Search() {
                   </Card>
                 </Link>
               ))}
-            </div>
+              </div>
+            )}
 
             {businesses.length === 0 && !isLoading && (
               <Card className="text-center py-12 border-[#E4E7EB] col-span-2">

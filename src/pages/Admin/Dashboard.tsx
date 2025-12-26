@@ -91,7 +91,7 @@ export default function Dashboard() {
             title="Product Enrollments"
             value={stats?.totalEnrollments || 0}
             icon={TrendingUp}
-            description="Fintech product enrollments"
+            description="Business tool enrollments"
           />
           <StatsCard
             title="Commission Revenue"

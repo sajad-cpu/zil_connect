@@ -1,6 +1,7 @@
 import { pb } from "@/api/pocketbaseClient";
 import { connectionService } from "@/api/services/connectionService";
 import { messageService } from "@/api/services/messageService";
+import { ConnectionListSkeleton, MessageSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -462,10 +463,42 @@ export default function Connected() {
   // Show loading state
   if (loadingConnections || loadingConversations) {
     return (
-      <div className="min-h-screen bg-[#F1F1F2] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[#FB6542] animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading conversations...</p>
+      <div className="min-h-screen bg-[#F1F1F2]">
+        <div className="bg-gradient-to-r from-[#00246B] to-blue-900 text-white py-12">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex items-center gap-3 mb-3">
+              <MessageSquare className="w-10 h-10" />
+              <h1 className="text-4xl font-bold">Messages</h1>
+            </div>
+            <p className="text-xl text-white/90">Chat with your connected businesses</p>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <Card className="border-none shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 300px)' }}>
+            <div className="grid md:grid-cols-3 h-full overflow-hidden">
+              <div className="border-r border-gray-200 flex flex-col bg-white h-full min-h-0">
+                <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input placeholder="Search connections..." className="pl-10" disabled />
+                  </div>
+                </div>
+                <ScrollArea className="flex-1 min-h-0">
+                  <ConnectionListSkeleton count={5} />
+                </ScrollArea>
+              </div>
+              <div className="md:col-span-2 flex flex-col bg-gray-50">
+                <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+                  <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="p-4 bg-gray-50">
+                    <MessageSkeleton count={6} />
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     );
@@ -690,11 +723,8 @@ export default function Connected() {
                     <ScrollArea className="flex-1 min-h-0">
                       <div className="p-4 bg-gray-50">
                         {loadingMessages ? (
-                          <div className="flex items-center justify-center h-full min-h-[400px]">
-                            <div className="text-center">
-                              <Loader2 className="w-8 h-8 text-[#FB6542] animate-spin mx-auto mb-2" />
-                              <p className="text-sm text-gray-500">Loading messages...</p>
-                            </div>
+                          <div className="p-4 bg-gray-50">
+                            <MessageSkeleton count={6} />
                           </div>
                         ) : messagesError ? (
                           <div className="flex items-center justify-center h-full min-h-[400px]">

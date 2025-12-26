@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ListSkeleton } from "@/components/skeletons";
 import {
   Tag,
   Plus,
@@ -174,8 +175,8 @@ export default function MyOffers() {
 
         {/* Offers List */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-12 h-12 text-[#6C4DE6] animate-spin" />
+          <div className="space-y-4">
+            <ListSkeleton count={4} showImage={true} showActions={true} />
           </div>
         ) : myOffers.length === 0 ? (
           <Card className="border-[#E4E7EB] shadow-md text-center py-12">

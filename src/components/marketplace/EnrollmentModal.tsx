@@ -237,7 +237,7 @@ export default function EnrollmentModal({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Please create a business profile first to enroll in fintech products.
+                  Please create a business profile first to enroll in business tools.
             </AlertDescription>
           </Alert>
           <Button

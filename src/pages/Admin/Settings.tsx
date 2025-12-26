@@ -91,7 +91,7 @@ export default function AdminSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enable Fintech Marketplace</Label>
+                <Label>Enable Business Tools Marketplace</Label>
                 <input type="checkbox" defaultChecked className="w-4 h-4" />
               </div>
               <div className="flex items-center justify-between">

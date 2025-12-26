@@ -1,5 +1,6 @@
 
 import { businessService } from "@/api/services/businessService";
+import { BusinessCardSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -182,24 +183,7 @@ export default function Marketplace() {
         {/* Business Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="animate-pulse border-[#E4E7EB]">
-                  <CardHeader>
-                    <div className="h-16 bg-gray-200 rounded-lg mb-4" />
-                    <div className="h-6 bg-gray-200 rounded w-3/4" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-20 bg-gray-200 rounded" />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            <BusinessCardSkeleton count={6} />
           </div>
         ) : filteredBusinesses.length === 0 ? (
           <motion.div

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { eventService } from "@/api/services/eventService";
+import { EventCardSkeleton } from "@/components/skeletons";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
@@ -91,18 +92,7 @@ export default function Events() {
         {/* Events Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="h-48 bg-gray-200" />
-                <CardHeader>
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <div className="h-20 bg-gray-200 rounded" />
-                </CardContent>
-              </Card>
-            ))}
+            <EventCardSkeleton count={4} />
           </div>
         ) : filteredEvents.length === 0 ? (
           <Card className="text-center py-12">

@@ -1,5 +1,6 @@
 import { applicationService } from "@/api/services/applicationService";
 import { opportunityService } from "@/api/services/opportunityService";
+import { OpportunityCardSkeleton, ListSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,9 +191,8 @@ export default function MyOpportunities() {
               </Card>
             )}
             {loadingOpportunities ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-[#7C7C7C]">Loading your opportunities...</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OpportunityCardSkeleton count={4} />
               </div>
             ) : myOpportunities.length === 0 ? (
               <Card className="text-center py-16 border-[#E4E7EB]">
@@ -306,9 +306,8 @@ export default function MyOpportunities() {
             )}
 
             {loadingApplications ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-[#7C7C7C]">Loading applications...</p>
+              <div className="space-y-4">
+                <ListSkeleton count={3} showActions={false} />
               </div>
             ) : applicationsReceived.length === 0 ? (
               <Card className="text-center py-16 border-[#E4E7EB]">

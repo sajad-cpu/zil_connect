@@ -17,12 +17,9 @@ import {
   ArrowRight,
   Award,
   Briefcase,
-  Building2,
-  Calculator,
   Calendar,
   ChevronLeft,
   ChevronRight,
-  CreditCard,
   Eye,
   Heart,
   Sparkles,
@@ -58,9 +55,6 @@ export default function Home() {
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Get user data from localStorage
-  const userName = localStorage.getItem("zil_user_name") || "User";
-
   const { data: businesses = [] } = useQuery({
     queryKey: ['businesses-trending'],
     queryFn: () => businessService.filter({}, '-created', 6),
@@ -92,11 +86,15 @@ export default function Home() {
     initialData: [],
   });
 
-  const { data: featuredProducts = [] } = useQuery({
-    queryKey: ['fintech-products-featured'],
-    queryFn: () => fintechProductService.getFeatured(8),
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ['fintech-products-all'],
+    queryFn: () => fintechProductService.list("-enrollments"),
     initialData: [],
   });
+
+  const displayedProducts = allProducts
+    .filter((p: any) => p.is_active !== false)
+    .slice(0, 12);
 
 
   // Get real counts from database
@@ -297,15 +295,23 @@ export default function Home() {
               transition={{ delay: 0.3, duration: 0.6 }}
               className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
             >
-              Welcome back, <span className="bg-gradient-to-r from-[#6C4DE6] to-[#318FFD] bg-clip-text text-transparent">{userName}</span>!
+              Welcome back to <span className="bg-gradient-to-r from-[#6C4DE6] to-[#318FFD] bg-clip-text text-transparent">Zil Connect</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-xl md:text-2xl mb-8 text-white/90"
+              className="text-xl md:text-2xl mb-4 text-white/90"
             >
-              AI-powered networking meets financial credibility. Discover partners, close deals, and build your network with trust.
+              Connect with verified businesses, discover opportunities, and grow your network.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="text-lg md:text-xl mb-8 text-white/80"
+            >
+              Find partners, explore deals, access business tools, and build trusted relationships that help your business thrive.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -349,85 +355,6 @@ export default function Home() {
             </Alert>
           </section>
         </ScrollReveal>
-      )}
-
-      {/* Fintech Marketplace Section */}
-      {featuredProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-6 py-12">
-          <ScrollReveal>
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h2 className="text-3xl font-bold text-[#1E1E1E] mb-2 flex items-center gap-2">
-                  <CreditCard className="w-8 h-8 text-[#6C4DE6]" />
-                  Fintech Marketplace
-                </h2>
-                <p className="text-[#7C7C7C]">Essential tools for your business • QuickBooks, Stripe, and more</p>
-              </div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
-                  <Link to={createPageUrl("FintechMarketplace")}>
-                    Explore All <ArrowRight className="ml-2 w-4 h-4" />
-                  </Link>
-                </Button>
-              </motion.div>
-            </div>
-          </ScrollReveal>
-
-          <MilestoneMarker icon={CreditCard} gradient="from-green-500 to-emerald-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts.slice(0, 8).map((product: any, index: number) => (
-                <ScrollReveal key={product.id} delay={index * 0.1}>
-                  <ProductCard
-                    product={product}
-                    onEnroll={(p) => {
-                      setSelectedProduct(p);
-                      setEnrollmentModalOpen(true);
-                    }}
-                    onView={(p) => {
-                      setSelectedProduct(p);
-                      setProductModalOpen(true);
-                    }}
-                  />
-                </ScrollReveal>
-              ))}
-            </div>
-
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
-                  <CardContent className="p-4 text-center">
-                    <Calculator className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-[#1E1E1E]">Accounting</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
-                  <CardContent className="p-4 text-center">
-                    <CreditCard className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-[#1E1E1E]">Payments</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
-                  <CardContent className="p-4 text-center">
-                    <Building2 className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-[#1E1E1E]">Banking</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Card className="border-[#E4E7EB] shadow-md hover:shadow-lg transition-all cursor-pointer">
-                  <CardContent className="p-4 text-center">
-                    <TrendingUp className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-[#1E1E1E]">Analytics</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </MilestoneMarker>
-        </section>
       )}
 
       {/* Stats Section with Milestone */}
@@ -501,7 +428,7 @@ export default function Home() {
               onMouseEnter={() => setIsCarouselPaused(true)}
               onMouseLeave={() => setIsCarouselPaused(false)}
             >
-              <Card className="border-none shadow-2xl overflow-hidden bg-white relative">
+              <Card className="border-none shadow-2xl overflow-hidden bg-white relative min-h-[500px]">
                 {/* Scroll Hint Indicator */}
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -519,10 +446,10 @@ export default function Home() {
 
                 </motion.div>
 
-                <div className="grid md:grid-cols-2 gap-0">
+                <div className="grid md:grid-cols-2 gap-0 h-full">
                   {/* Discount Side with Parallax */}
                   <ParallaxSection speed={0.3}>
-                    <div className="relative h-96 bg-gradient-to-br from-[#6C4DE6] via-[#7E57C2] to-[#A37FFB] flex items-center justify-center overflow-hidden">
+                    <div className="relative h-full min-h-[500px] bg-gradient-to-br from-[#6C4DE6] via-[#7E57C2] to-[#A37FFB] flex items-center justify-center overflow-hidden">
                       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200')] opacity-20 bg-cover bg-center" />
 
                       {/* Animated Circle Background */}
@@ -602,7 +529,7 @@ export default function Home() {
                         {offers[currentOfferSlide]?.title}
                       </motion.h3>
                       <motion.p
-                        className="text-[#7C7C7C] text-lg mb-6"
+                        className="text-[#7C7C7C] text-lg mb-6 line-clamp-4"
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5 }}
@@ -718,6 +645,51 @@ export default function Home() {
               )}
             </div>
           </MilestoneMarker>
+        </section>
+      )}
+
+      {/* Business Tools Marketplace Section */}
+      {displayedProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 py-12">
+          <ScrollReveal>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-4xl font-bold text-[#1E1E1E] mb-3">
+                  Run Your Business Better
+                </h2>
+                <p className="text-xl text-[#7C7C7C]">
+                  Powerful Tools for Your Operations
+                </p>
+              </div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
+                  <Link to={createPageUrl("FintechMarketplace")}>
+                    View All <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
+          </ScrollReveal>
+
+          <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-4">
+            {displayedProducts.slice(0, 6).map((product: any, index: number) => (
+              <div key={product.id} className="flex-shrink-0 w-80">
+                <ScrollReveal delay={index * 0.05}>
+                  <ProductCard
+                    product={product}
+                    onEnroll={(p) => {
+                      setSelectedProduct(p);
+                      setEnrollmentModalOpen(true);
+                    }}
+                    onView={(p) => {
+                      setSelectedProduct(p);
+                      setProductModalOpen(true);
+                    }}
+                  />
+                </ScrollReveal>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

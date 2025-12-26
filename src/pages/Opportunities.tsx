@@ -1,4 +1,5 @@
 import { opportunityService } from "@/api/services/opportunityService";
+import { OpportunityCardSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,13 +36,13 @@ export default function Opportunities() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("-created");
 
-  const { data: opportunities = [], isLoading } = useQuery({
+  const { data: opportunities, isLoading } = useQuery({
     queryKey: ['opportunities-all', sortBy],
     queryFn: () => opportunityService.list(sortBy),
-    initialData: [],
   });
 
-  const filteredOpportunities = opportunities.filter((opp: any) => {
+  const opportunitiesList = opportunities || [];
+  const filteredOpportunities = opportunitiesList.filter((opp: any) => {
     const matchesSearch = !searchQuery ||
       opp.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       opp.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -200,15 +201,11 @@ export default function Opportunities() {
         </Card>
 
         {/* Loading State */}
-        {isLoading && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[#7C7C7C]">Loading opportunities...</p>
+        {isLoading || !opportunities ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <OpportunityCardSkeleton count={6} />
           </div>
-        )}
-
-        {/* No Results */}
-        {!isLoading && filteredOpportunities.length === 0 && (
+        ) : filteredOpportunities.length === 0 ? (
           <Card className="text-center py-16 border-[#E4E7EB]">
             <CardContent>
               <Briefcase className="w-20 h-20 text-[#7C7C7C]/30 mx-auto mb-6" />
@@ -218,10 +215,7 @@ export default function Opportunities() {
               </p>
             </CardContent>
           </Card>
-        )}
-
-        {/* Opportunities Grid */}
-        {!isLoading && filteredOpportunities.length > 0 && (
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredOpportunities.map((opp: any, index: number) => (
               <motion.div

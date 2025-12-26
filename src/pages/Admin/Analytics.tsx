@@ -65,7 +65,7 @@ export default function AdminAnalytics() {
             title="Product Enrollments"
             value={stats?.totalEnrollments || 0}
             icon={TrendingUp}
-            description="Fintech enrollments"
+            description="Business tool enrollments"
           />
           <StatsCard
             title="Paid Commissions"

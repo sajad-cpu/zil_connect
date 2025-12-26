@@ -1,20 +1,21 @@
-import React, { useState } from "react";
-import { offerService } from "@/api/services/offerService";
-import { useQuery } from "@tanstack/react-query";
 import { pb } from "@/api/pocketbaseClient";
+import { offerService } from "@/api/services/offerService";
+import { OfferCardSkeleton } from "@/components/skeletons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
-  Tag,
-  TrendingUp,
-  Percent,
-  Clock,
   CheckCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Clock,
+  Percent,
+  Tag,
+  TrendingUp
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { useState } from "react";
 import OfferClaimModal from "../components/OfferClaimModal";
 
 export default function Offers() {
@@ -23,14 +24,14 @@ export default function Offers() {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const currentUserId = pb.authStore.model?.id;
 
-  const { data: offers = [], isLoading, refetch } = useQuery({
+  const { data: offers, isLoading, refetch } = useQuery({
     queryKey: ['offers-all'],
     queryFn: () => offerService.list('-created'),
-    initialData: [],
   });
 
-  const featuredOffers = offers.filter(o => o.is_featured).slice(0, 5);
-  const regularOffers = offers.filter(o => !o.is_featured);
+  const offersList = offers || [];
+  const featuredOffers = offersList.filter(o => o.is_featured).slice(0, 5);
+  const regularOffers = offersList.filter(o => !o.is_featured);
 
   // Check if current user created the offer
   const isMyOffer = (offer: any) => {
@@ -45,7 +46,7 @@ export default function Offers() {
     setCurrentSlide((prev) => (prev - 1 + featuredOffers.length) % featuredOffers.length);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return null;
     try {
       const date = new Date(dateString);
@@ -56,7 +57,7 @@ export default function Offers() {
     }
   };
 
-  const handleClaimOffer = (offer) => {
+  const handleClaimOffer = (offer: any) => {
     setSelectedOffer(offer);
     setClaimModalOpen(true);
   };
@@ -76,7 +77,31 @@ export default function Offers() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Featured Offers Carousel */}
-        {featuredOffers.length > 0 && (
+        {isLoading || !offers ? (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-[#1E1E1E] mb-6">🔥 Featured Offers</h2>
+            <div className="relative">
+              <Card className="border-[#E4E7EB] shadow-2xl overflow-hidden">
+                <div className="grid md:grid-cols-2 gap-0">
+                  <div className="relative h-96 bg-gradient-to-br from-[#6C4DE6] via-[#7E57C2] to-[#593CC9] flex items-center justify-center">
+                    <div className="animate-pulse">
+                      <div className="h-32 w-32 bg-white/20 rounded-lg" />
+                    </div>
+                  </div>
+                  <div className="p-8 md:p-12 flex flex-col justify-center bg-white">
+                    <div className="space-y-4">
+                      <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-12 w-40 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        ) : featuredOffers.length > 0 ? (
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-[#1E1E1E] mb-6">🔥 Featured Offers</h2>
             <div className="relative">
@@ -165,9 +190,8 @@ export default function Offers() {
                       <button
                         key={index}
                         onClick={() => setCurrentSlide(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          index === currentSlide ? 'bg-[#6C4DE6] w-8' : 'bg-[#E4E7EB]'
-                        }`}
+                        className={`w-2 h-2 rounded-full transition-all ${index === currentSlide ? 'bg-[#6C4DE6] w-8' : 'bg-[#E4E7EB]'
+                          }`}
                       />
                     ))}
                   </div>
@@ -175,27 +199,17 @@ export default function Offers() {
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* All Offers Grid */}
         <div>
           <h2 className="text-2xl font-bold text-[#1E1E1E] mb-6">All Available Offers</h2>
-          
-          {isLoading ? (
+
+          {isLoading || !offers ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="animate-pulse border-[#E4E7EB]">
-                  <div className="h-48 bg-gray-200" />
-                  <CardHeader>
-                    <div className="h-6 bg-gray-200 rounded w-3/4" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-20 bg-gray-200 rounded" />
-                  </CardContent>
-                </Card>
-              ))}
+              <OfferCardSkeleton count={6} />
             </div>
-          ) : regularOffers.length === 0 ? (
+          ) : regularOffers.length === 0 && featuredOffers.length === 0 ? (
             <Card className="text-center py-12 border-[#E4E7EB]">
               <CardContent>
                 <Tag className="w-16 h-16 text-[#7C7C7C]/30 mx-auto mb-4" />

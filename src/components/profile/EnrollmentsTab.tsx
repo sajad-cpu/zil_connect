@@ -99,7 +99,7 @@ export default function EnrollmentsTab({ userId }: EnrollmentsTabProps) {
                 No enrollments yet
               </h3>
               <p className="text-gray-600 mb-4">
-                Enroll in fintech products from the marketplace to see them here
+                Enroll in business tools from the marketplace to see them here
               </p>
             </div>
           ) : (

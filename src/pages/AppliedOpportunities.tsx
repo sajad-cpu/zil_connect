@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { applicationService } from "@/api/services/applicationService";
+import { ListSkeleton } from "@/components/skeletons";
 import {
   Briefcase,
   ArrowLeft,
@@ -132,9 +133,8 @@ export default function AppliedOpportunities() {
 
         {/* Applications List */}
         {isLoading ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-[#7C7C7C]">Loading your applications...</p>
+          <div className="space-y-4">
+            <ListSkeleton count={4} showImage={true} showActions={true} />
           </div>
         ) : applications.length === 0 ? (
           <Card className="text-center py-16 border-[#E4E7EB]">
