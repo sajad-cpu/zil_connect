@@ -88,14 +88,14 @@ export default function Marketplace() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-[#241C3A] via-[#3C2F63] to-[#241C3A] text-white py-12"
+        className="bg-gradient-to-r from-[#241C3A] via-[#3C2F63] to-[#241C3A] text-white py-6 sm:py-8 md:py-12"
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <motion.h1
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-4xl font-bold mb-3"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3"
           >
             Business Marketplace
           </motion.h1>
@@ -103,37 +103,37 @@ export default function Marketplace() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-xl text-white/90"
+            className="text-base sm:text-lg md:text-xl text-white/90"
           >
             Discover verified SMBs ready to partner with you
           </motion.p>
         </div>
       </motion.div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Search & Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <Card className="mb-8 border-[#E4E7EB] shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="mb-6 sm:mb-8 border-[#E4E7EB] shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="md:col-span-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-5 h-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-4 h-4 sm:w-5 sm:h-5" />
                     <Input
                       type="text"
                       placeholder="Search businesses, services, locations..."
-                      className="pl-10 h-12 border-[#E4E7EB]"
+                      className="pl-9 sm:pl-10 h-10 sm:h-12 border-[#E4E7EB] text-sm sm:text-base"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
                 <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
-                  <SelectTrigger className="h-12 border-[#E4E7EB]">
+                  <SelectTrigger className="h-10 sm:h-12 border-[#E4E7EB] text-sm sm:text-base">
                     <Filter className="w-4 h-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
@@ -147,7 +147,7 @@ export default function Marketplace() {
                   </SelectContent>
                 </Select>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-12 border-[#E4E7EB]">
+                  <SelectTrigger className="h-10 sm:h-12 border-[#E4E7EB] text-sm sm:text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -167,22 +167,23 @@ export default function Marketplace() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="flex items-center justify-between mb-6"
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6"
         >
-          <p className="text-[#7C7C7C]">
+          <p className="text-sm sm:text-base text-[#7C7C7C]">
             <span className="font-semibold text-[#1E1E1E]">{filteredBusinesses.length}</span> businesses found
           </p>
           <div className="flex gap-2">
-            <Badge variant="outline" className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20">
+            <Badge variant="outline" className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20 text-xs">
               <Verified className="w-3 h-3 mr-1" />
-              Verified businesses get 3x more leads
+              <span className="hidden sm:inline">Verified businesses get 3x more leads</span>
+              <span className="sm:hidden">Verified</span>
             </Badge>
           </div>
         </motion.div>
 
         {/* Business Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <BusinessCardSkeleton count={6} />
           </div>
         ) : filteredBusinesses.length === 0 ? (
@@ -191,14 +192,14 @@ export default function Marketplace() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="text-center py-12 border-[#E4E7EB]">
-              <CardContent>
-                <Search className="w-16 h-16 text-[#7C7C7C]/30 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-[#1E1E1E] mb-2">No businesses found</h3>
-                <p className="text-[#7C7C7C] mb-6">Try adjusting your search or filters</p>
+            <Card className="text-center py-10 sm:py-12 border-[#E4E7EB]">
+              <CardContent className="p-4 sm:p-6">
+                <Search className="w-12 h-12 sm:w-16 sm:h-16 text-[#7C7C7C]/30 mx-auto mb-3 sm:mb-4" />
+                <h3 className="text-lg sm:text-xl font-semibold text-[#1E1E1E] mb-2">No businesses found</h3>
+                <p className="text-sm sm:text-base text-[#7C7C7C] mb-4 sm:mb-6">Try adjusting your search or filters</p>
                 <Button
                   onClick={() => { setSearchTerm(""); setSelectedIndustry("all"); }}
-                  className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                  className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white text-sm sm:text-base"
                 >
                   Clear Filters
                 </Button>
@@ -234,13 +235,27 @@ export default function Marketplace() {
 
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-3 mb-3">
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.6 }}
-                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-2xl shadow-lg"
-                      >
-                        {(business.name || business.business_name || 'B')?.[0]?.toUpperCase() || 'B'}
-                      </motion.div>
+                      {business.logo ? (
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.3 }}
+                          className="w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 shadow-lg"
+                        >
+                          <img
+                            src={businessService.getLogoUrl(business)}
+                            alt={business.name || business.business_name}
+                            className="w-full h-full object-cover"
+                          />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.6 }}
+                          className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-2xl shadow-lg"
+                        >
+                          {(business.name || business.business_name || 'B')?.[0]?.toUpperCase() || 'B'}
+                        </motion.div>
+                      )}
                       <div className="flex-1">
                         <CardTitle className="text-lg group-hover:text-[#6C4DE6] transition-colors duration-300 mb-1">
                           {business.name || business.business_name || 'Business'}

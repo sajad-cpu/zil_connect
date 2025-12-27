@@ -1,4 +1,5 @@
 import { pb } from "@/api/pocketbaseClient";
+import { businessService } from "@/api/services/businessService";
 import { connectionService } from "@/api/services/connectionService";
 import { messageService } from "@/api/services/messageService";
 import { ConnectionListSkeleton, MessageSkeleton } from "@/components/skeletons";
@@ -45,6 +46,13 @@ export default function Connected() {
   const connectionsListRef = useRef<HTMLDivElement>(null);
   const invalidateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentUserId = pb.authStore.model?.id;
+
+  // Fetch current user's business
+  const { data: currentUserBusiness } = useQuery({
+    queryKey: ['my-business'],
+    queryFn: () => businessService.getMyBusiness(),
+    enabled: !!currentUserId,
+  });
 
   // Fetch all accepted connections
   const { data: connections = [], isLoading: loadingConnections } = useQuery({
@@ -351,6 +359,7 @@ export default function Connected() {
   // Cleanup subscription and timeouts on unmount
   useEffect(() => {
     return () => {
+      console.log('Connected component unmounting - cleaning up');
       if (subscriptionRef.current && typeof subscriptionRef.current === 'function') {
         console.log('Cleaning up subscription on component unmount');
         try {
@@ -364,6 +373,9 @@ export default function Connected() {
         clearTimeout(invalidateTimeoutRef.current);
         invalidateTimeoutRef.current = null;
       }
+      // Clear messages state
+      setMessages([]);
+      setSelectedConnection(null);
     };
   }, []);
 
@@ -507,28 +519,28 @@ export default function Connected() {
   return (
     <div className="min-h-screen bg-[#F1F1F2]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#00246B] to-blue-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-3 mb-3">
-            <MessageSquare className="w-10 h-10" />
-            <h1 className="text-4xl font-bold">Messages</h1>
+      <div className="bg-gradient-to-r from-[#00246B] to-blue-900 text-white py-6 sm:py-8 md:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <MessageSquare className="w-8 h-8 sm:w-10 sm:h-10" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Messages</h1>
           </div>
-          <p className="text-xl text-white/90">Chat with your connected businesses</p>
+          <p className="text-base sm:text-lg md:text-xl text-white/90">Chat with your connected businesses</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {!hasConnections ? (
-          <Card className="text-center py-16 border-none shadow-lg">
-            <CardContent>
-              <MessageSquare className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-[#00246B] mb-3">No Connections Yet</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+          <Card className="text-center py-12 sm:py-16 border-none shadow-lg">
+            <CardContent className="p-4 sm:p-6">
+              <MessageSquare className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4 sm:mb-6" />
+              <h3 className="text-xl sm:text-2xl font-bold text-[#00246B] mb-2 sm:mb-3">No Connections Yet</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
                 Connect with businesses to start messaging
               </p>
-              <div className="flex gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <Button
-                  className="bg-[#FB6542] hover:bg-[#e5573a] text-white"
+                  className="bg-[#FB6542] hover:bg-[#e5573a] text-white w-full sm:w-auto"
                   onClick={() => navigate(createPageUrl("Search"))}
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
@@ -536,7 +548,7 @@ export default function Connected() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-[#00246B] text-[#00246B] hover:bg-[#00246B] hover:text-white"
+                  className="border-[#00246B] text-[#00246B] hover:bg-[#00246B] hover:text-white w-full sm:w-auto"
                   onClick={() => navigate(createPageUrl("Invitations"))}
                 >
                   View Invitations
@@ -545,17 +557,17 @@ export default function Connected() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-none shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 300px)' }}>
-            <div className="grid md:grid-cols-3 h-full overflow-hidden">
+          <Card className="border-none shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 h-full overflow-hidden">
               {/* Connections List */}
-              <div className="border-r border-gray-200 flex flex-col bg-white h-full min-h-0">
+              <div className="border-b md:border-b-0 md:border-r border-gray-200 flex flex-col bg-white h-[300px] md:h-full min-h-0">
                 {/* Search */}
-                <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                <div className="p-3 sm:p-4 border-b border-gray-200 flex-shrink-0">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="Search connections..."
-                      className="pl-10"
+                      className="pl-10 text-sm sm:text-base"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -566,8 +578,8 @@ export default function Connected() {
                 <ScrollArea className="flex-1 min-h-0">
                   <div ref={connectionsListRef}>
                     {filteredConversations.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <p className="text-gray-500">No conversations yet</p>
+                      <div className="p-4 sm:p-8 text-center">
+                        <p className="text-sm sm:text-base text-gray-500">No conversations yet</p>
                       </div>
                     ) : (
                       filteredConversations.map((conv: any) => {
@@ -604,43 +616,41 @@ export default function Connected() {
                         return (
                           <div
                             key={conv.connection.id}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
+                            onClick={() => {
                               handleConnectionSelect(conv.connection);
                             }}
-                            className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${selectedConnection?.id === conv.connection.id
-                              ? 'bg-orange-50 border-l-4 border-l-[#FB6542]'
+                            className={`p-3 sm:p-4 border-b border-gray-100 cursor-pointer transition-colors ${selectedConnection?.id === conv.connection.id
+                              ? 'bg-orange-50 border-l-2 md:border-l-4 border-l-[#FB6542]'
                               : 'hover:bg-gray-50'
                               }`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               <div className="relative">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0">
                                   {userName?.[0]?.toUpperCase() || businessName?.[0]?.toUpperCase() || "?"}
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-1">
-                                  <h3 className="font-semibold text-[#00246B] text-sm truncate">
+                                <div className="flex items-start justify-between mb-1 gap-2">
+                                  <h3 className="font-semibold text-[#00246B] text-xs sm:text-sm truncate">
                                     {userName}
                                   </h3>
                                   {conv.latestMessage && (
-                                    <span className="text-xs text-gray-500">
+                                    <span className="text-xs text-gray-500 whitespace-nowrap">
                                       {formatLastMessageTime(conv.latestMessage.created)}
                                     </span>
                                   )}
                                 </div>
                                 <p className="text-xs text-gray-500 mb-1 truncate">{businessName}</p>
                                 {conv.latestMessage && (
-                                  <p className="text-sm text-gray-600 truncate">
+                                  <p className="text-xs sm:text-sm text-gray-600 truncate">
                                     {conv.latestMessage.content}
                                   </p>
                                 )}
                               </div>
                               {conv.unreadCount > 0 && (
-                                <div className="w-5 h-5 bg-[#FB6542] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                  {conv.unreadCount}
+                                <div className="w-4 h-4 sm:w-5 sm:h-5 bg-[#FB6542] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                  {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
                                 </div>
                               )}
                             </div>
@@ -653,11 +663,11 @@ export default function Connected() {
               </div>
 
               {/* Chat Area */}
-              <div className="md:col-span-2 flex flex-col bg-white h-full min-h-0">
+              <div className="md:col-span-2 flex flex-col bg-white h-[calc(100vh-500px)] md:h-full min-h-0">
                 {selectedConnection && selectedConnection.id ? (
                   <>
                     {/* Chat Header */}
-                    <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white flex-shrink-0">
+                    <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between bg-white flex-shrink-0">
                       {(() => {
                         // Find the conversation data for the selected connection
                         const conversation = conversations.find((conv: any) => conv.connection.id === selectedConnection.id);
@@ -681,23 +691,23 @@ export default function Connected() {
 
                         return (
                           <>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold flex-shrink-0">
                                 {userName?.[0]?.toUpperCase() || businessName?.[0]?.toUpperCase() || "?"}
                               </div>
-                              <div>
-                                <h3 className="font-bold text-[#00246B]">{userName}</h3>
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                  <Building2 className="w-3 h-3" />
-                                  <span>{businessName}</span>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-bold text-[#00246B] text-sm sm:text-base truncate">{userName}</h3>
+                                <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500">
+                                  <Building2 className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{businessName}</span>
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button size="icon" variant="ghost" className="text-[#00246B] hover:bg-gray-100">
-                                    <MoreVertical className="w-5 h-5" />
+                                  <Button size="icon" variant="ghost" className="text-[#00246B] hover:bg-gray-100 w-8 h-8 sm:w-10 sm:h-10">
+                                    <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -721,46 +731,91 @@ export default function Connected() {
 
                     {/* Messages */}
                     <ScrollArea className="flex-1 min-h-0">
-                      <div className="p-4 bg-gray-50">
+                      <div className="p-2 sm:p-4 bg-gray-50">
                         {loadingMessages ? (
-                          <div className="p-4 bg-gray-50">
+                          <div className="p-2 sm:p-4 bg-gray-50">
                             <MessageSkeleton count={6} />
                           </div>
                         ) : messagesError ? (
-                          <div className="flex items-center justify-center h-full min-h-[400px]">
+                          <div className="flex items-center justify-center h-full min-h-[300px] sm:min-h-[400px]">
                             <div className="text-center">
-                              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                              <p className="text-sm text-red-500">Error loading messages</p>
+                              <MessageSquare className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-2" />
+                              <p className="text-xs sm:text-sm text-red-500">Error loading messages</p>
                               <p className="text-xs text-gray-500 mt-1">Please try again</p>
                             </div>
                           </div>
                         ) : messages.length === 0 ? (
-                          <div className="flex items-center justify-center h-full min-h-[400px]">
+                          <div className="flex items-center justify-center h-full min-h-[300px] sm:min-h-[400px]">
                             <div className="text-center">
-                              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                              <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                              <MessageSquare className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-2" />
+                              <p className="text-xs sm:text-sm text-gray-500">No messages yet. Start the conversation!</p>
                             </div>
                           </div>
                         ) : (
-                          <div className="space-y-4">
+                          <div className="space-y-3 sm:space-y-4">
                             {messages.map((message: any) => {
                               const isMine = message.sender === currentUserId;
                               const isOptimistic = message.id.startsWith('temp-');
                               const isRead = message.read === true;
 
+                              // Get business for the message sender
+                              let senderBusiness = null;
+                              if (isMine) {
+                                senderBusiness = currentUserBusiness;
+                              } else {
+                                // Find the business that belongs to the message sender
+                                const businessFrom = selectedConnection?.expand?.business_from;
+                                const businessTo = selectedConnection?.expand?.business_to;
+
+                                // Check if business_from owner matches the sender
+                                if (businessFrom) {
+                                  const ownerId = typeof businessFrom.owner === 'string'
+                                    ? businessFrom.owner
+                                    : businessFrom.owner?.id || businessFrom.expand?.owner?.id;
+                                  if (ownerId === message.sender) {
+                                    senderBusiness = businessFrom;
+                                  }
+                                }
+
+                                // Check if business_to owner matches the sender
+                                if (!senderBusiness && businessTo) {
+                                  const ownerId = typeof businessTo.owner === 'string'
+                                    ? businessTo.owner
+                                    : businessTo.owner?.id || businessTo.expand?.owner?.id;
+                                  if (ownerId === message.sender) {
+                                    senderBusiness = businessTo;
+                                  }
+                                }
+                              }
+
                               return (
                                 <div
                                   key={message.id}
-                                  className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+                                  className={`flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
                                 >
+                                  {!isMine && (
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                                      {senderBusiness?.logo ? (
+                                        <img
+                                          src={businessService.getLogoUrl(senderBusiness)}
+                                          alt={senderBusiness.business_name || 'Business'}
+                                          className="w-full h-full rounded-full object-cover border-2 border-gray-200"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-sm sm:text-base border-2 border-gray-200">
+                                          {senderBusiness?.business_name?.[0]?.toUpperCase() || <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                   <div
-                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${isMine
+                                    className={`max-w-[75%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-2xl ${isMine
                                       ? 'bg-[#FB6542] text-white rounded-br-none'
                                       : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
                                       }`}
                                   >
-                                    <p className="text-sm">{message.content}</p>
-                                    <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? '' : 'justify-start'}`}>
+                                    <p className="text-xs sm:text-sm break-words">{message.content}</p>
+                                    <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
                                       <p className={`text-xs ${isMine ? 'text-white/70' : 'text-gray-500'}`}>
                                         {formatMessageTime(message.created)}
                                       </p>
@@ -769,14 +824,29 @@ export default function Connected() {
                                           {isOptimistic ? (
                                             <Check className="w-3 h-3 text-white/70" />
                                           ) : isRead ? (
-                                            <CheckCheck className="w-3.5 h-3.5 text-blue-300" />
+                                            <CheckCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-300" />
                                           ) : (
-                                            <CheckCheck className="w-3.5 h-3.5 text-white/70" />
+                                            <CheckCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/70" />
                                           )}
                                         </span>
                                       )}
                                     </div>
                                   </div>
+                                  {isMine && (
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                                      {currentUserBusiness?.logo ? (
+                                        <img
+                                          src={businessService.getLogoUrl(currentUserBusiness)}
+                                          alt={currentUserBusiness.business_name || 'Business'}
+                                          className="w-full h-full rounded-full object-cover border-2 border-gray-200"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full rounded-full bg-gradient-to-br from-[#00246B] to-[#FB6542] flex items-center justify-center text-white font-bold text-sm sm:text-base border-2 border-gray-200">
+                                          {currentUserBusiness?.business_name?.[0]?.toUpperCase() || <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -787,25 +857,25 @@ export default function Connected() {
                     </ScrollArea>
 
                     {/* Message Input */}
-                    <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+                    <form onSubmit={handleSendMessage} className="p-3 sm:p-4 border-t border-gray-200 bg-white flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <Input
                           placeholder="Type your message..."
                           value={messageText}
                           onChange={(e) => setMessageText(e.target.value)}
-                          className="flex-1"
+                          className="flex-1 text-sm sm:text-base"
                           disabled={sendMessageMutation.isPending}
                         />
                         <Button
                           type="submit"
                           size="icon"
-                          className="bg-[#FB6542] hover:bg-[#e5573a] text-white"
+                          className="bg-[#FB6542] hover:bg-[#e5573a] text-white w-9 h-9 sm:w-10 sm:h-10"
                           disabled={sendMessageMutation.isPending || !messageText.trim()}
                         >
                           {sendMessageMutation.isPending ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                           ) : (
-                            <Send className="w-5 h-5" />
+                            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                           )}
                         </Button>
                       </div>
@@ -813,10 +883,10 @@ export default function Connected() {
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full bg-gray-50">
-                    <div className="text-center">
-                      <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-600 mb-2">Select a conversation</h3>
-                      <p className="text-gray-500">Choose from your connected businesses to start chatting</p>
+                    <div className="text-center p-4">
+                      <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">Select a conversation</h3>
+                      <p className="text-sm sm:text-base text-gray-500">Choose from your connected businesses to start chatting</p>
                     </div>
                   </div>
                 )}

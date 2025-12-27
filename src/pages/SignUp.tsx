@@ -82,16 +82,39 @@ export default function SignUp() {
 
     try {
       // Create user account in PocketBase
-      const userData = {
+      const userData: any = {
         email: formData.email,
         password: formData.password,
         passwordConfirm: formData.passwordConfirm,
         name: formData.name,
-        emailVisibility: true,
       };
 
       // Create the user
-      const user = await pb.collection('users').create(userData);
+      let user;
+      try {
+        user = await pb.collection('users').create(userData);
+      } catch (createError: any) {
+        // If there's a validation error, try without emailVisibility
+        // Some PocketBase setups may not have this field or may handle it differently
+        if (createError.data?.emailVisibility || createError.message?.includes('emailVisibility')) {
+          const userDataWithoutVisibility = {
+            email: formData.email,
+            password: formData.password,
+            passwordConfirm: formData.passwordConfirm,
+            name: formData.name,
+          };
+          user = await pb.collection('users').create(userDataWithoutVisibility);
+        } else {
+          throw createError;
+        }
+      }
+
+      // Auto-login after successful account creation
+      const authData = await pb.collection('users').authWithPassword(
+        formData.email,
+        formData.password
+      );
+      user = authData.record;
 
       // Create a business profile for the user
       if (formData.businessName) {
@@ -110,15 +133,9 @@ export default function SignUp() {
         }
       }
 
-      // Auto-login after successful account creation
-      const authData = await pb.collection('users').authWithPassword(
-        formData.email,
-        formData.password
-      );
-
       toast({
         title: "Welcome to Zil Connect! 🎉",
-        description: `Your account has been created successfully, ${authData.record.name}!`,
+        description: `Your account has been created successfully, ${user.name || user.email}!`,
         className: "bg-[#08B150] text-white border-none",
       });
 
@@ -127,19 +144,49 @@ export default function SignUp() {
         navigate("/Home", { replace: true });
       }, 1500);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Sign up error:", err);
+      console.error("Error details:", {
+        status: err.status,
+        message: err.message,
+        data: err.data,
+        response: err.response
+      });
 
       if (err.status === 400) {
-        if (err.data?.email) {
-          setError("This email is already registered. Please sign in instead.");
-        } else if (err.data?.password) {
-          setError("Password must be at least 8 characters long");
+        const errorData = err.data || {};
+        
+        if (errorData.email) {
+          const emailError = Array.isArray(errorData.email) ? errorData.email[0] : errorData.email;
+          if (emailError?.message?.includes('already') || emailError?.message?.includes('unique')) {
+            setError("This email is already registered. Please sign in instead.");
+          } else {
+            setError(`Email error: ${emailError?.message || emailError || 'Invalid email'}`);
+          }
+        } else if (errorData.password) {
+          const passwordError = Array.isArray(errorData.password) ? errorData.password[0] : errorData.password;
+          setError(`Password error: ${passwordError?.message || passwordError || 'Invalid password'}`);
+        } else if (errorData.passwordConfirm) {
+          const confirmError = Array.isArray(errorData.passwordConfirm) ? errorData.passwordConfirm[0] : errorData.passwordConfirm;
+          setError(`Password confirmation error: ${confirmError?.message || confirmError || 'Passwords do not match'}`);
+        } else if (errorData.name) {
+          const nameError = Array.isArray(errorData.name) ? errorData.name[0] : errorData.name;
+          setError(`Name error: ${nameError?.message || nameError || 'Invalid name'}`);
+        } else if (err.message) {
+          setError(err.message);
+        } else if (Object.keys(errorData).length > 0) {
+          const firstError = Object.values(errorData)[0];
+          const errorMsg = Array.isArray(firstError) ? firstError[0]?.message || firstError[0] : firstError?.message || firstError;
+          setError(errorMsg || "Invalid information. Please check your inputs.");
         } else {
-          setError(err.message || "Invalid information. Please check your inputs.");
+          setError("Failed to create account. Please check your information and try again.");
         }
+      } else if (err.status === 403 || err.status === 401) {
+        setError("Permission denied. Please contact support if this issue persists.");
+      } else if (err.status === 0 || !err.status) {
+        setError("Cannot connect to server. Please check your internet connection.");
       } else {
-        setError("Failed to create account. Please try again.");
+        setError(err.message || "Failed to create account. Please try again.");
       }
     } finally {
       setIsLoading(false);

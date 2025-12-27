@@ -4,6 +4,7 @@ import BadgesTab from "@/components/badges/BadgesTab";
 import PortfolioTab from "@/components/portfolio/PortfolioTab";
 import EnrollmentsTab from "@/components/profile/EnrollmentsTab";
 import ServicesTab from "@/components/profile/ServicesTab";
+import { ProfileSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,14 +33,18 @@ import {
   Plus,
   Star,
   TrendingUp,
-  Users
+  Users,
+  X
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function Profile() {
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     business_name: "",
     tagline: "",
@@ -52,11 +57,10 @@ export default function Profile() {
     website: ""
   });
 
-  const { data: business, isLoading, refetch } = useQuery({
+  const { data: business, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['my-business'],
     queryFn: () => businessService.getMyBusiness(),
-    initialData: null,
-    staleTime: 0, // Always refetch when component mounts
+    staleTime: 0,
     refetchOnMount: true,
   });
 
@@ -85,8 +89,38 @@ export default function Profile() {
         phone: business.contact_info?.phone || "",
         website: business.contact_info?.website || ""
       });
+      setLogoFile(null);
+      setLogoPreview(null);
     }
     setShowSetupForm(true);
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Logo file size must be less than 5MB");
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select an image file");
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
+    }
   };
 
   const handleSubmitBusiness = async (e: React.FormEvent) => {
@@ -126,24 +160,56 @@ export default function Profile() {
           toast.error("Unable to identify business to update");
           return;
         }
-        await businessService.update(businessId, businessData);
+
+        if (logoFile) {
+          const formDataToSend = new FormData();
+          formDataToSend.append("business_name", businessData.business_name);
+          formDataToSend.append("tagline", businessData.tagline || "");
+          formDataToSend.append("description", businessData.description);
+          formDataToSend.append("industry", businessData.industry);
+          formDataToSend.append("location", JSON.stringify(businessData.location));
+          formDataToSend.append("contact_info", JSON.stringify(businessData.contact_info));
+          formDataToSend.append("logo", logoFile);
+          await businessService.update(businessId, formDataToSend);
+        } else {
+          await businessService.update(businessId, businessData);
+        }
         toast.success("Business profile updated successfully!");
       } else {
         // Create new business - only if no existing business found
-        await businessService.create({
-          ...businessData,
-          owner: userId,
-          trust_score: 0,
-          profile_views: 0,
-          engagement_score: 0,
-          is_verified: false
-        });
+        if (logoFile) {
+          const formDataToSend = new FormData();
+          formDataToSend.append("business_name", businessData.business_name);
+          formDataToSend.append("tagline", businessData.tagline || "");
+          formDataToSend.append("description", businessData.description);
+          formDataToSend.append("industry", businessData.industry);
+          formDataToSend.append("location", JSON.stringify(businessData.location));
+          formDataToSend.append("contact_info", JSON.stringify(businessData.contact_info));
+          formDataToSend.append("owner", userId);
+          formDataToSend.append("trust_score", "0");
+          formDataToSend.append("profile_views", "0");
+          formDataToSend.append("engagement_score", "0");
+          formDataToSend.append("is_verified", "false");
+          formDataToSend.append("logo", logoFile);
+          await businessService.create(formDataToSend);
+        } else {
+          await businessService.create({
+            ...businessData,
+            owner: userId,
+            trust_score: 0,
+            profile_views: 0,
+            engagement_score: 0,
+            is_verified: false
+          });
+        }
         toast.success("Business profile created successfully!");
       }
 
       // Refetch to get updated data
       await refetch();
       setShowSetupForm(false);
+      setLogoFile(null);
+      setLogoPreview(null);
     } catch (error: any) {
       console.error("Error saving business:", error);
 
@@ -161,16 +227,9 @@ export default function Profile() {
     }
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#6C4DE6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#7C7C7C]">Loading profile...</p>
-        </div>
-      </div>
-    );
+  // Loading state - show skeleton while loading or fetching
+  if (isLoading || isFetching || business === undefined) {
+    return <ProfileSkeleton />;
   }
 
   // No business - show setup form
@@ -198,6 +257,52 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmitBusiness} className="space-y-6">
+                <div>
+                  <Label className="text-[#1E1E1E] mb-2 block">Business Logo</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {(logoPreview || (business?.logo && !logoFile)) ? (
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-[#E4E7EB]">
+                          <img
+                            src={logoPreview || (business?.logo ? businessService.getLogoUrl(business) : '')}
+                            alt="Logo preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-3xl border-2 border-[#E4E7EB]">
+                          {formData.business_name?.[0]?.toUpperCase() || <Building2 className="w-12 h-12" />}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="hidden"
+                        id="logo-upload"
+                      />
+                      <Label
+                        htmlFor="logo-upload"
+                        className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-[#6C4DE6] hover:bg-[#593CC9] text-white rounded-lg transition-colors"
+                      >
+                        <Camera className="w-4 h-4" />
+                        {logoPreview || business?.logo ? "Change Logo" : "Upload Logo"}
+                      </Label>
+                      <p className="text-xs text-gray-500 mt-1">JPG, PNG, SVG or GIF (max 5MB)</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="business_name" className="text-[#1E1E1E]">Business Name *</Label>
@@ -358,83 +463,91 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Cover Image */}
-      <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
+      <div className="relative h-40 sm:h-48 md:h-64 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1600')] opacity-20 bg-cover bg-center" />
-        <div className="absolute bottom-4 right-4">
-          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white">
-            <Camera className="w-4 h-4 mr-2" />
-            Change Cover
+        <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4">
+          <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white text-xs sm:text-sm">
+            <Camera className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Change Cover</span>
+            <span className="sm:hidden">Cover</span>
           </Button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-20 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-12 sm:-mt-16 md:-mt-20 relative z-10">
         {/* Profile Header Card */}
-        <Card className="border-none shadow-2xl mb-8">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row gap-6">
+        <Card className="border-none shadow-2xl mb-6 sm:mb-8">
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
               {/* Logo */}
-              <div className="relative">
-                <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-5xl shadow-xl">
-                  {business?.business_name?.[0]?.toUpperCase() || <Building2 className="w-16 h-16" />}
-                </div>
-                <Button size="sm" variant="secondary" className="absolute bottom-0 right-0 rounded-full w-10 h-10 p-0">
-                  <Camera className="w-4 h-4" />
-                </Button>
+              <div className="relative flex-shrink-0">
+                {business?.logo ? (
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-gray-200 shadow-xl">
+                    <img
+                      src={businessService.getLogoUrl(business)}
+                      alt={business.business_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-3xl sm:text-4xl md:text-5xl shadow-xl">
+                    {business?.business_name?.[0]?.toUpperCase() || <Building2 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" />}
+                  </div>
+                )}
               </div>
 
               {/* Info */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{business?.business_name || 'Business Name'}</h1>
-                    <p className="text-gray-600 text-lg mb-3">{business?.tagline || 'No tagline'}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3 sm:gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 truncate">{business?.business_name || 'Business Name'}</h1>
+                    <p className="text-base sm:text-lg text-gray-600 mb-2 sm:mb-3 line-clamp-2">{business?.tagline || 'No tagline'}</p>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
                         {business?.industry || 'Not specified'}
                       </Badge>
                       {business?.is_verified ? (
-                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                        <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
                           <Award className="w-3 h-3 mr-1" />
                           Verified
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 text-xs">
                           Not Verified
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <Button onClick={handleEditClick} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Button onClick={handleEditClick} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full sm:w-auto text-sm">
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
                 </div>
 
                 {/* Contact Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
                   {business?.location?.city && business?.location?.state && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{business.location.city}, {business.location.state}</span>
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{business.location.city}, {business.location.state}</span>
                     </div>
                   )}
                   {business?.contact_info?.email && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span>{business.contact_info.email}</span>
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{business.contact_info.email}</span>
                     </div>
                   )}
                   {business?.contact_info?.phone && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      <span>{business.contact_info.phone}</span>
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{business.contact_info.phone}</span>
                     </div>
                   )}
                   {business?.contact_info?.website && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Globe className="w-4 h-4" />
-                      <span>{business.contact_info.website || 'N/A'}</span>
+                      <Globe className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{business.contact_info.website || 'N/A'}</span>
                     </div>
                   )}
                 </div>
@@ -442,32 +555,32 @@ export default function Profile() {
             </div>
 
             {/* Stats Bar */}
-            <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
-                  <Star className="w-5 h-5 fill-current" />
-                  <span className="text-2xl font-bold">{business?.trust_score || 0}</span>
+                  <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                  <span className="text-xl sm:text-2xl font-bold">{business?.trust_score || 0}</span>
                 </div>
                 <p className="text-xs text-gray-500">Trust Score</p>
               </div>
               <div className="text-center border-l border-gray-200">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <Eye className="w-5 h-5 text-gray-400" />
-                  <span className="text-2xl font-bold text-gray-900">{business?.profile_views || 0}</span>
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  <span className="text-xl sm:text-2xl font-bold text-gray-900">{business?.profile_views || 0}</span>
                 </div>
                 <p className="text-xs text-gray-500">Profile Views</p>
               </div>
               <div className="text-center border-l border-gray-200">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users className="w-5 h-5 text-gray-400" />
-                  <span className="text-2xl font-bold text-gray-900">0</span>
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  <span className="text-xl sm:text-2xl font-bold text-gray-900">0</span>
                 </div>
                 <p className="text-xs text-gray-500">Connections</p>
               </div>
               <div className="text-center border-l border-gray-200">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <TrendingUp className="w-5 h-5 text-gray-400" />
-                  <span className="text-2xl font-bold text-gray-900">{business?.engagement_score || 0}</span>
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  <span className="text-xl sm:text-2xl font-bold text-gray-900">{business?.engagement_score || 0}</span>
                 </div>
                 <p className="text-xs text-gray-500">Engagement</p>
               </div>

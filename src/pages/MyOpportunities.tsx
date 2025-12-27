@@ -1,6 +1,6 @@
 import { applicationService } from "@/api/services/applicationService";
 import { opportunityService } from "@/api/services/opportunityService";
-import { OpportunityCardSkeleton, ListSkeleton } from "@/components/skeletons";
+import { ListSkeleton, OpportunityCardSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,43 +129,44 @@ export default function MyOpportunities() {
     <div className="min-h-screen bg-[#F8F9FC]">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#6C4DE6] to-[#7E57C2] text-white">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Briefcase className="w-8 h-8" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                <Briefcase className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-2">My Opportunities</h1>
-                <p className="text-white/90">Manage your posted opportunities and view applications</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">My Opportunities</h1>
+                <p className="text-sm sm:text-base text-white/90">Manage your posted opportunities and view applications</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => refetchOpportunities()}
                 disabled={loadingOpportunities}
                 variant="outline"
-                className="border-white text-white hover:bg-white/10"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto text-xs sm:text-sm"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loadingOpportunities ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${loadingOpportunities ? 'animate-spin' : ''}`} />
                 {loadingOpportunities ? 'Refreshing...' : 'Refresh'}
               </Button>
               <Button
                 onClick={handleRecalculateCounts}
                 disabled={isRecalculating}
                 variant="outline"
-                className="border-white text-white hover:bg-white/10"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto text-xs sm:text-sm"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isRecalculating ? 'animate-spin' : ''}`} />
-                {isRecalculating ? 'Updating...' : 'Refresh Counts'}
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${isRecalculating ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isRecalculating ? 'Updating...' : 'Refresh Counts'}</span>
+                <span className="sm:hidden">{isRecalculating ? 'Updating...' : 'Counts'}</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <Tabs defaultValue="opportunities" className="space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <Tabs defaultValue="opportunities" className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="opportunities">My Opportunities</TabsTrigger>
             <TabsTrigger value="applications">Applications Received</TabsTrigger>

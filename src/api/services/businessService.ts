@@ -85,6 +85,19 @@ export const businessService = {
   },
 
   /**
+   * Get logo URL
+   */
+  getLogoUrl(business: any): string {
+    try {
+      if (!business?.logo) return '';
+      return pb.files.getUrl(business, business.logo);
+    } catch (error: any) {
+      console.error('Error getting logo URL:', error);
+      return '';
+    }
+  },
+
+  /**
    * Delete business
    */
   async delete(id: string) {

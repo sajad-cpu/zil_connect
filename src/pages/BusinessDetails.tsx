@@ -110,62 +110,63 @@ export default function BusinessDetails() {
     <div className="min-h-screen bg-[#F8F9FC]">
       {/* Back Button */}
       <div className="bg-white border-b border-[#E4E7EB]">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Button variant="ghost" asChild className="text-[#1E1E1E] hover:bg-[#F8F9FC]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <Button variant="ghost" asChild className="text-[#1E1E1E] hover:bg-[#F8F9FC] text-sm sm:text-base">
             <Link to={createPageUrl("Marketplace")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Marketplace
+              <span className="hidden sm:inline">Back to Marketplace</span>
+              <span className="sm:hidden">Back</span>
             </Link>
           </Button>
         </div>
       </div>
 
       {/* Cover Image */}
-      <div className="relative h-64 bg-gradient-to-r from-[#6C4DE6] to-[#7E57C2] overflow-hidden">
+      <div className="relative h-40 sm:h-48 md:h-64 bg-gradient-to-r from-[#6C4DE6] to-[#7E57C2] overflow-hidden">
         {business.cover_image_url && (
           <img src={business.cover_image_url} alt="Cover" className="w-full h-full object-cover opacity-30" />
         )}
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-20 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-12 sm:-mt-16 md:-mt-20 relative z-10">
         {/* Profile Header Card */}
-        <Card className="border-[#E4E7EB] shadow-2xl mb-8">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row gap-6">
+        <Card className="border-[#E4E7EB] shadow-2xl mb-6 sm:mb-8">
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
               {/* Logo */}
-              <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-5xl shadow-xl flex-shrink-0">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-3xl sm:text-4xl md:text-5xl shadow-xl flex-shrink-0">
                 {business.business_name[0].toUpperCase()}
               </div>
 
               {/* Info */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-[#1E1E1E] mb-2">{business.business_name}</h1>
-                    <p className="text-[#7C7C7C] text-lg mb-3">{business.tagline}</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="bg-[#318FFD]/10 text-[#318FFD] border-[#318FFD]/20">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3 sm:gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1 sm:mb-2 break-words">{business.business_name}</h1>
+                    <p className="text-base sm:text-lg text-[#7C7C7C] mb-2 sm:mb-3 line-clamp-2">{business.tagline}</p>
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      <Badge className="bg-[#318FFD]/10 text-[#318FFD] border-[#318FFD]/20 text-xs">
                         {business.industry}
                       </Badge>
                       {business.is_verified && (
-                        <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20">
+                        <Badge className="bg-[#08B150]/10 text-[#08B150] border-[#08B150]/20 text-xs">
                           <Award className="w-3 h-3 mr-1" />
                           Verified
                         </Badge>
                       )}
                       {business.verified_badges?.map((badge: string, idx: number) => (
-                        <Badge key={idx} variant="outline" className="border-[#E4E7EB] text-[#7C7C7C]">
+                        <Badge key={idx} variant="outline" className="border-[#E4E7EB] text-[#7C7C7C] text-xs">
                           {badge}
                         </Badge>
                       ))}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     {/* Show different buttons based on connection status */}
                     {business.owner === currentUserId ? (
                       // Own business - show edit button
                       <Button
-                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white w-full sm:w-auto text-sm sm:text-base"
                         onClick={() => navigate(createPageUrl("Profile"))}
                       >
                         Edit Profile
@@ -173,7 +174,7 @@ export default function BusinessDetails() {
                     ) : !connectionStatus ? (
                       // No connection - show loading or connect button
                       <Button
-                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white w-full sm:w-auto text-sm sm:text-base"
                         onClick={() => sendConnectionMutation.mutate()}
                         disabled={sendConnectionMutation.isPending}
                       >
@@ -192,7 +193,7 @@ export default function BusinessDetails() {
                     ) : (!connectionStatus || connectionStatus.status === 'none') ? (
                       // No connection exists
                       <Button
-                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white"
+                        className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white w-full sm:w-auto text-sm sm:text-base"
                         onClick={() => sendConnectionMutation.mutate()}
                         disabled={sendConnectionMutation.isPending}
                       >
@@ -212,17 +213,18 @@ export default function BusinessDetails() {
                       // Connection request pending
                       <Button
                         variant="outline"
-                        className="border-amber-300 text-amber-700 bg-amber-50"
+                        className="border-amber-300 text-amber-700 bg-amber-50 w-full sm:w-auto text-sm sm:text-base"
                         disabled
                       >
                         <Clock className="w-4 h-4 mr-2" />
-                        {(connectionStatus as any)?.isSender ? 'Request Sent' : 'Pending'}
+                        <span className="hidden sm:inline">{(connectionStatus as any)?.isSender ? 'Request Sent' : 'Pending'}</span>
+                        <span className="sm:hidden">Pending</span>
                       </Button>
                     ) : connectionStatus.status === 'accepted' ? (
                       // Already connected
                       <Button
                         variant="outline"
-                        className="border-green-300 text-green-700 bg-green-50"
+                        className="border-green-300 text-green-700 bg-green-50 w-full sm:w-auto text-sm sm:text-base"
                         disabled
                       >
                         <UserCheck className="w-4 h-4 mr-2" />
@@ -234,7 +236,7 @@ export default function BusinessDetails() {
                     {connectionStatus?.status === 'accepted' && connectionStatus.connection && (
                       <Button
                         variant="outline"
-                        className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC]"
+                        className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] w-full sm:w-auto text-sm sm:text-base"
                         onClick={() => navigate(createPageUrl("Connected") + `?connection=${connectionStatus.connection?.id}`)}
                       >
                         <MessageSquare className="w-4 h-4 mr-2" />

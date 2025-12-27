@@ -136,40 +136,40 @@ export default function FintechMarketplace() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-[#241C3A] via-[#3C2F63] to-[#241C3A] text-white py-12"
+        className="bg-gradient-to-r from-[#241C3A] via-[#3C2F63] to-[#241C3A] text-white py-6 sm:py-8 md:py-12"
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <motion.h1
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-4xl font-bold mb-3 flex items-center gap-3"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3"
           >
-            <CreditCard className="w-10 h-10" />
+            <CreditCard className="w-8 h-8 sm:w-10 sm:h-10" />
             Business Tools
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-xl text-white/90"
+            className="text-base sm:text-lg md:text-xl text-white/90"
           >
             Discover essential business tools - Accounting, Payments, Banking & more
           </motion.p>
         </div>
       </motion.div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <ScrollReveal delay={0.2}>
-          <Card className="mb-8 border-[#E4E7EB] shadow-lg">
-            <CardContent className="p-6">
-              <div className="mb-4">
+          <Card className="mb-6 sm:mb-8 border-[#E4E7EB] shadow-lg">
+            <CardContent className="p-4 sm:p-6">
+              <div className="mb-3 sm:mb-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-5 h-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7C7C7C] w-4 h-4 sm:w-5 sm:h-5" />
                   <Input
                     type="text"
                     placeholder="Search products, providers..."
-                    className="pl-10 h-12 border-[#E4E7EB]"
+                    className="pl-9 sm:pl-10 h-10 sm:h-12 border-[#E4E7EB] text-sm sm:text-base"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -192,13 +192,13 @@ export default function FintechMarketplace() {
               <>
                 {categories.slice(0, 3).map((category, categoryIndex) => (
                   <ScrollReveal key={category.name} delay={categoryIndex * 0.1}>
-                    <div className="mb-12">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-2xl font-bold text-[#1E1E1E]">
+                    <div className="mb-8 sm:mb-12">
+                      <div className="flex items-center justify-between mb-4 sm:mb-6">
+                        <h3 className="text-xl sm:text-2xl font-bold text-[#1E1E1E]">
                           {category.displayName}
                         </h3>
                       </div>
-                      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
+                      <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6">
                         <ProductCardSkeleton count={4} />
                       </div>
                     </div>
@@ -212,9 +212,9 @@ export default function FintechMarketplace() {
 
                 return (
                   <ScrollReveal key={category.name} delay={categoryIndex * 0.1}>
-                    <div className="mb-12">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-2xl font-bold text-[#1E1E1E]">
+                    <div className="mb-8 sm:mb-12">
+                      <div className="flex items-center justify-between mb-4 sm:mb-6">
+                        <h3 className="text-xl sm:text-2xl font-bold text-[#1E1E1E]">
                           {category.displayName}
                         </h3>
                       </div>
@@ -222,7 +222,7 @@ export default function FintechMarketplace() {
                       <div className="relative group">
                         <div
                           ref={(el) => (scrollRefs.current[category.name] = el)}
-                          className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 scroll-smooth"
+                          className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 scroll-smooth -mx-4 sm:-mx-6 px-4 sm:px-6"
                           style={{
                             scrollbarWidth: 'none',
                             msOverflowStyle: 'none',
@@ -231,7 +231,7 @@ export default function FintechMarketplace() {
                           {categoryProducts.map((product: any) => (
                             <div
                               key={product.id}
-                              className="flex-shrink-0 w-80"
+                              className="flex-shrink-0 w-[280px] sm:w-80"
                             >
                               <ProductCard
                                 product={product}
@@ -247,15 +247,15 @@ export default function FintechMarketplace() {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg border-gray-200 z-10 hidden group-hover:flex"
+                              className="absolute left-2 sm:left-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg border-gray-200 z-10 hidden group-hover:flex w-8 h-8 sm:w-10 sm:h-10"
                               onClick={() => scrollCategory(category.name, 'left')}
                             >
-                              <ChevronLeft className="w-5 h-5" />
+                              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                             </Button>
                             <Button
                               variant="outline"
                               size="icon"
-                              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg border-gray-200 z-10 hidden group-hover:flex"
+                              className="absolute right-2 sm:right-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg border-gray-200 z-10 hidden group-hover:flex w-8 h-8 sm:w-10 sm:h-10"
                               onClick={() => scrollCategory(category.name, 'right')}
                             >
                               <ChevronRight className="w-5 h-5" />

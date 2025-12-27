@@ -277,14 +277,14 @@ export default function Home() {
           className="absolute bottom-20 left-20 w-40 h-40 rounded-full bg-[#318FFD]/10 blur-3xl"
         />
 
-        <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-28">
           <div className="max-w-3xl">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
             >
-              <Badge className="mb-4 bg-[#6C4DE6] text-white border-none">
+              <Badge className="mb-4 bg-[#6C4DE6] text-white border-none text-xs sm:text-sm">
                 <Zap className="w-3 h-3 mr-1" />
                 Where SMBs don't just connect, they grow, trade, and thrive
               </Badge>
@@ -293,7 +293,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight"
             >
               Welcome back to <span className="bg-gradient-to-r from-[#6C4DE6] to-[#318FFD] bg-clip-text text-transparent">Zil Connect</span>
             </motion.h1>
@@ -301,7 +301,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-xl md:text-2xl mb-4 text-white/90"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl mb-3 sm:mb-4 text-white/90"
             >
               Connect with verified businesses, discover opportunities, and grow your network.
             </motion.p>
@@ -309,7 +309,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="text-lg md:text-xl mb-8 text-white/80"
+              className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 text-white/80"
             >
               Find partners, explore deals, access business tools, and build trusted relationships that help your business thrive.
             </motion.p>
@@ -334,14 +334,14 @@ export default function Home() {
       {/* Profile Completion Alert */}
       {isProfileIncomplete && profileCompletionData && (
         <ScrollReveal delay={0.2}>
-          <section className="max-w-7xl mx-auto px-6 -mt-8 relative z-10">
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
             <Alert className="border-[#318FFD] bg-white shadow-xl">
               <AlertCircle className="h-5 w-5 text-[#318FFD]" />
               <AlertDescription className="ml-2">
-                <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex-1">
-                    <span className="font-semibold text-[#1E1E1E]">Your profile is {profileCompletion}% complete.</span>
-                    <span className="text-[#7C7C7C] ml-2">Complete it now to unlock more opportunities and boost your visibility!</span>
+                    <span className="font-semibold text-[#1E1E1E] text-sm sm:text-base">Your profile is {profileCompletion}% complete.</span>
+                    <span className="text-[#7C7C7C] ml-0 sm:ml-2 block sm:inline text-xs sm:text-sm">Complete it now to unlock more opportunities and boost your visibility!</span>
                   </div>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button asChild size="sm" className="bg-[#6C4DE6] hover:bg-[#593CC9] transition-all duration-300">
@@ -358,8 +358,8 @@ export default function Home() {
       )}
 
       {/* Stats Section with Milestone */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {stats.map((stat, index) => (
             <ScrollReveal key={index} delay={index * 0.1}>
               <motion.div
@@ -375,24 +375,24 @@ export default function Home() {
                     transition={{ duration: 0.8 }}
                   />
 
-                  <CardContent className="p-6 relative z-10">
+                  <CardContent className="p-4 sm:p-6 relative z-10">
                     <div className="flex items-center justify-between mb-3">
                       <motion.div
                         whileHover={{ rotate: 360 }}
                         transition={{ duration: 0.6 }}
-                        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-md`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-md`}
                       >
-                        <stat.icon className="w-6 h-6 text-white" />
+                        <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </motion.div>
-                      <TrendingUp className="w-5 h-5 text-green-500" />
+                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                     </div>
                     <motion.h3
-                      className="text-3xl font-bold text-[#1E1E1E] mb-1"
+                      className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1"
                       whileHover={{ scale: 1.05 }}
                     >
                       {stat.value}
                     </motion.h3>
-                    <p className="text-sm text-gray-600">{stat.label}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">{stat.label}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -403,18 +403,18 @@ export default function Home() {
 
       {/* Featured Offers Carousel - Milestone Section */}
       {offers.length > 0 && (
-        <section ref={carouselRef} className="max-w-7xl mx-auto px-6 py-12 scroll-smooth">
+        <section ref={carouselRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 scroll-smooth">
           <ScrollReveal>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
               <div>
-                <h2 className="text-3xl font-bold text-[#1E1E1E] mb-2 flex items-center gap-2">
-                  <Sparkles className="w-8 h-8 text-[#6C4DE6]" />
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-2 flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-[#6C4DE6]" />
                   Featured Offers
                 </h2>
-                <p className="text-[#7C7C7C]">Exclusive deals from our community • Scroll to explore</p>
+                <p className="text-sm sm:text-base text-[#7C7C7C]">Exclusive deals from our community • Scroll to explore</p>
               </div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
+                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300 w-full sm:w-auto">
                   <Link to={createPageUrl("Offers")}>
                     View All <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
@@ -446,10 +446,10 @@ export default function Home() {
 
                 </motion.div>
 
-                <div className="grid md:grid-cols-2 gap-0 h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-0 h-full">
                   {/* Discount Side with Parallax */}
                   <ParallaxSection speed={0.3}>
-                    <div className="relative h-full min-h-[500px] bg-gradient-to-br from-[#6C4DE6] via-[#7E57C2] to-[#A37FFB] flex items-center justify-center overflow-hidden">
+                    <div className="relative h-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px] bg-gradient-to-br from-[#6C4DE6] via-[#7E57C2] to-[#A37FFB] flex items-center justify-center overflow-hidden">
                       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200')] opacity-20 bg-cover bg-center" />
 
                       {/* Animated Circle Background */}
@@ -473,14 +473,14 @@ export default function Home() {
                           transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
                         >
                           <motion.p
-                            className="text-8xl font-bold mb-2"
+                            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-2"
                             whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
                             transition={{ duration: 0.5 }}
                           >
                             {offers[currentOfferSlide]?.discount_percentage}%
                           </motion.p>
                           <motion.p
-                            className="text-3xl font-semibold"
+                            className="text-xl sm:text-2xl md:text-3xl font-semibold"
                             initial={{ y: 10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.3 }}
@@ -509,19 +509,19 @@ export default function Home() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.5, delay: 0.2 }}
-                      className="p-8 md:p-12 flex flex-col justify-center"
+                      className="p-4 sm:p-6 md:p-8 lg:p-12 flex flex-col justify-center"
                     >
                       <motion.div
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.3 }}
                       >
-                        <Badge className="w-fit mb-4 bg-[#6C4DE6] text-white border-none">
+                        <Badge className="w-fit mb-3 sm:mb-4 bg-[#6C4DE6] text-white border-none text-xs sm:text-sm">
                           Featured Offer
                         </Badge>
                       </motion.div>
                       <motion.h3
-                        className="text-3xl font-bold text-[#1E1E1E] mb-4"
+                        className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1E1E1E] mb-3 sm:mb-4"
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.4 }}
@@ -529,7 +529,7 @@ export default function Home() {
                         {offers[currentOfferSlide]?.title}
                       </motion.h3>
                       <motion.p
-                        className="text-[#7C7C7C] text-lg mb-6 line-clamp-4"
+                        className="text-[#7C7C7C] text-sm sm:text-base md:text-lg mb-4 sm:mb-6 line-clamp-3 sm:line-clamp-4"
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5 }}
@@ -537,28 +537,28 @@ export default function Home() {
                         {offers[currentOfferSlide]?.description}
                       </motion.p>
                       <motion.div
-                        className="space-y-3 mb-6"
+                        className="space-y-2 sm:space-y-3 mb-4 sm:mb-6"
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.6 }}
                       >
-                        <div className="flex items-center gap-2 text-[#7C7C7C]">
-                          <Tag className="w-5 h-5 text-[#318FFD]" />
-                          <span>By {offers[currentOfferSlide]?.business_name}</span>
+                        <div className="flex items-center gap-2 text-[#7C7C7C] text-xs sm:text-sm">
+                          <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-[#318FFD]" />
+                          <span className="truncate">By {offers[currentOfferSlide]?.business_name}</span>
                         </div>
                         {formatDate(offers[currentOfferSlide]?.valid_until) && (
-                          <div className="flex items-center gap-2 text-[#7C7C7C]">
-                            <Calendar className="w-5 h-5 text-[#318FFD]" />
+                          <div className="flex items-center gap-2 text-[#7C7C7C] text-xs sm:text-sm">
+                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#318FFD]" />
                             <span>Valid until {formatDate(offers[currentOfferSlide]?.valid_until)}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 text-[#7C7C7C]">
-                            <Eye className="w-5 h-5 text-[#318FFD]" />
+                        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                          <div className="flex items-center gap-2 text-[#7C7C7C] text-xs sm:text-sm">
+                            <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-[#318FFD]" />
                             <span>{offers[currentOfferSlide]?.views || 0} views</span>
                           </div>
-                          <div className="flex items-center gap-2 text-[#7C7C7C]">
-                            <Heart className="w-5 h-5 text-[#318FFD]" />
+                          <div className="flex items-center gap-2 text-[#7C7C7C] text-xs sm:text-sm">
+                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-[#318FFD]" />
                             <span>{offers[currentOfferSlide]?.likes || 0} likes</span>
                           </div>
                         </div>
@@ -650,19 +650,19 @@ export default function Home() {
 
       {/* Business Tools Marketplace Section */}
       {displayedProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-6 py-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <ScrollReveal>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
               <div>
-                <h2 className="text-4xl font-bold text-[#1E1E1E] mb-3">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1E1E1E] mb-2 sm:mb-3">
                   Run Your Business Better
                 </h2>
-                <p className="text-xl text-[#7C7C7C]">
+                <p className="text-base sm:text-lg md:text-xl text-[#7C7C7C]">
                   Powerful Tools for Your Operations
                 </p>
               </div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
+                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300 w-full sm:w-auto">
                   <Link to={createPageUrl("FintechMarketplace")}>
                     View All <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
@@ -671,9 +671,9 @@ export default function Home() {
             </div>
           </ScrollReveal>
 
-          <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-4">
+          <div className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6">
             {displayedProducts.slice(0, 6).map((product: any, index: number) => (
-              <div key={product.id} className="flex-shrink-0 w-80">
+              <div key={product.id} className="flex-shrink-0 w-[280px] sm:w-80">
                 <ScrollReveal delay={index * 0.05}>
                   <ProductCard
                     product={product}
@@ -694,15 +694,15 @@ export default function Home() {
       )}
 
       {/* Trending Businesses - Milestone Section */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <ScrollReveal>
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-[#1E1E1E] mb-2">Trending Businesses</h2>
-              <p className="text-[#7C7C7C]">Top verified SMBs in your network</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-2">Trending Businesses</h2>
+              <p className="text-sm sm:text-base text-[#7C7C7C]">Top verified SMBs in your network</p>
             </div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
+              <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300 w-full sm:w-auto">
                 <Link to={createPageUrl("Marketplace")}>
                   View All <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
@@ -717,7 +717,7 @@ export default function Home() {
               <p className="text-[#7C7C7C]">No businesses found. Check your database connection.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {businesses.map((business, index) => (
                 <ScrollReveal key={business.id} delay={index * 0.1}>
                   <motion.div
@@ -733,21 +733,35 @@ export default function Home() {
                         transition={{ duration: 0.8 }}
                       />
 
-                      <CardHeader className="pb-3 relative z-10">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <motion.div
-                              whileHover={{ rotate: 360 }}
-                              transition={{ duration: 0.6 }}
-                              className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-xl shadow-lg"
-                            >
-                              {(business.name || business.business_name || 'B')?.[0]?.toUpperCase() || 'B'}
-                            </motion.div>
-                            <div>
-                              <CardTitle className="text-lg group-hover:text-[#6C4DE6] transition-colors duration-300">
+                      <CardHeader className="pb-3 p-4 sm:p-6 relative z-10">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            {business.logo ? (
+                              <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                transition={{ duration: 0.3 }}
+                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border-2 border-gray-200 shadow-lg flex-shrink-0"
+                              >
+                                <img
+                                  src={businessService.getLogoUrl(business)}
+                                  alt={business.name || business.business_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                whileHover={{ rotate: 360 }}
+                                transition={{ duration: 0.6 }}
+                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#6C4DE6] to-[#7E57C2] flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg flex-shrink-0"
+                              >
+                                {(business.name || business.business_name || 'B')?.[0]?.toUpperCase() || 'B'}
+                              </motion.div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-base sm:text-lg group-hover:text-[#6C4DE6] transition-colors duration-300 truncate">
                                 {business.name || business.business_name || 'Business'}
                               </CardTitle>
-                              <p className="text-sm text-[#7C7C7C]">{business.industry || 'N/A'}</p>
+                              <p className="text-xs sm:text-sm text-[#7C7C7C] truncate">{business.industry || 'N/A'}</p>
                             </div>
                           </div>
                           {(business.is_verified || business.verified) && (
@@ -764,15 +778,15 @@ export default function Home() {
                           )}
                         </div>
                       </CardHeader>
-                      <CardContent className="relative z-10">
-                        <p className="text-[#7C7C7C] text-sm mb-4 line-clamp-2">{business.tagline || business.description || 'No description available'}</p>
-                        <div className="flex items-center justify-between">
+                      <CardContent className="relative z-10 p-4 sm:p-6 pt-0">
+                        <p className="text-[#7C7C7C] text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">{business.tagline || business.description || 'No description available'}</p>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                           <div className="flex items-center gap-1 text-amber-500">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span className="text-sm font-semibold">{business.trust_score || 0}/100</span>
+                            <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
+                            <span className="text-xs sm:text-sm font-semibold">{business.trust_score || 0}/100</span>
                           </div>
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300">
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
+                            <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300 w-full sm:w-auto">
                               <Link to={createPageUrl("BusinessDetails") + `?id=${business.id}`}>
                                 View Profile <ArrowRight className="ml-1 w-3 h-3" />
                               </Link>
@@ -790,16 +804,16 @@ export default function Home() {
       </section>
 
       {/* Latest Opportunities */}
-      <section className="bg-white py-16 border-t border-[#E4E7EB]">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="bg-white py-12 sm:py-16 border-t border-[#E4E7EB]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <ScrollReveal>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
               <div>
-                <h2 className="text-3xl font-bold text-[#1E1E1E] mb-2">Latest Opportunities</h2>
-                <p className="text-[#7C7C7C]">Fresh deals and projects waiting for you</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-2">Latest Opportunities</h2>
+                <p className="text-sm sm:text-base text-[#7C7C7C]">Fresh deals and projects waiting for you</p>
               </div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300">
+                <Button variant="outline" asChild className="border-[#E4E7EB] text-[#1E1E1E] hover:bg-[#F8F9FC] transition-all duration-300 w-full sm:w-auto">
                   <Link to={createPageUrl("Opportunities")}>
                     View All <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
@@ -822,7 +836,7 @@ export default function Home() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {opportunities.map((opp, index) => (
                 <ScrollReveal key={opp.id} delay={index * 0.15} direction="left">
                   <motion.div
@@ -830,28 +844,28 @@ export default function Home() {
                     transition={{ duration: 0.3 }}
                   >
                     <Card className="hover:shadow-xl transition-all duration-300 border-[#E4E7EB] shadow-lg cursor-pointer">
-                      <CardHeader>
-                        <div className="flex items-start justify-between mb-2">
-                          <Badge className="bg-[#7E57C2]/10 text-[#7E57C2] border-[#7E57C2]/20">
+                      <CardHeader className="p-4 sm:p-6">
+                        <div className="flex items-start justify-between mb-2 gap-2">
+                          <Badge className="bg-[#7E57C2]/10 text-[#7E57C2] border-[#7E57C2]/20 text-xs">
                             {opp.type}
                           </Badge>
-                          <span className="text-xs text-[#7C7C7C]">
+                          <span className="text-xs text-[#7C7C7C] whitespace-nowrap">
                             {opp.created ? new Date(opp.created).toLocaleDateString() : 'N/A'}
                           </span>
                         </div>
-                        <CardTitle className="text-xl text-[#1E1E1E] hover:text-[#6C4DE6] transition-colors">
+                        <CardTitle className="text-lg sm:text-xl text-[#1E1E1E] hover:text-[#6C4DE6] transition-colors line-clamp-2">
                           {opp.title}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-[#7C7C7C] mb-4 line-clamp-2">{opp.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm text-[#7C7C7C]">
-                            <span>📍 {opp.location || 'Remote'}</span>
-                            <span>💰 {opp.budget || 'TBD'}</span>
+                      <CardContent className="p-4 sm:p-6 pt-0">
+                        <p className="text-[#7C7C7C] text-sm mb-3 sm:mb-4 line-clamp-2">{opp.description}</p>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-[#7C7C7C] flex-wrap">
+                            <span className="whitespace-nowrap">📍 {opp.location || 'Remote'}</span>
+                            <span className="whitespace-nowrap">💰 {opp.budget || 'TBD'}</span>
                           </div>
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white">
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
+                            <Button size="sm" asChild className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white w-full sm:w-auto">
                               <Link to={createPageUrl("OpportunityDetails") + `?id=${opp.id}`}>
                                 View Details
                               </Link>
@@ -870,7 +884,7 @@ export default function Home() {
 
       {/* CTA Section with Parallax */}
       <ParallaxSection speed={0.5}>
-        <section className="bg-gradient-to-r from-[#241C3A] to-[#3C2F63] text-white py-16 relative overflow-hidden">
+        <section className="bg-gradient-to-r from-[#241C3A] to-[#3C2F63] text-white py-12 sm:py-16 relative overflow-hidden">
           {/* Decorative Elements */}
           <motion.div
             animate={{
@@ -885,36 +899,36 @@ export default function Home() {
             className="absolute -top-10 -right-10 w-64 h-64 rounded-full bg-[#6C4DE6]/10 blur-3xl"
           />
 
-          <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10">
             <ScrollReveal>
               <motion.div
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
               >
-                <Target className="w-16 h-16 mx-auto mb-6 opacity-90" />
+                <Target className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 opacity-90" />
               </motion.div>
             </ScrollReveal>
             <ScrollReveal delay={0.2}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
                 Ready to Grow Your Business?
               </h2>
             </ScrollReveal>
             <ScrollReveal delay={0.3}>
-              <p className="text-xl mb-8 text-white/90">
+              <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 text-white/90">
                 Join thousands of SMBs building credibility, finding partners, and closing deals.
               </p>
             </ScrollReveal>
             <ScrollReveal delay={0.4}>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button size="lg" className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300 shadow-lg hover:shadow-xl">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
+                  <Button size="lg" className="bg-[#6C4DE6] hover:bg-[#593CC9] text-white transition-all duration-300 shadow-lg hover:shadow-xl w-full sm:w-auto">
                     <Link to={createPageUrl("Profile")}>
                       Complete Your Profile
                     </Link>
                   </Button>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 transition-all duration-300">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 transition-all duration-300 w-full sm:w-auto">
                     <Link to={createPageUrl("Search")}>
                       Find Partners
                     </Link>

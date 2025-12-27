@@ -1,274 +1,180 @@
-# Notifications Collection Setup Guide
+# Notifications Collection Setup
 
-## Overview
+This guide covers the setup of the notifications collection for the notification system.
 
-The `notifications` collection is needed for the full notification system functionality, including:
-- Marking notifications as read
-- Deleting notifications
-- Storing notification history
-- Future notification features
+## Collection: notifications
 
-**Note:** Currently, the notification dropdown works by pulling from `connections` and `messages` collections directly, but the `notificationService` API requires this collection for full functionality.
-
----
-
-## Collection Setup
-
-### Basic Info
-- **Collection Name**: `notifications`
-- **Type**: Base Collection
-
----
+**Collection Type:** Base Collection
 
 ## Fields
 
-### 1. `user` (Relation) - REQUIRED
-- **Type**: Relation
-- **Collection**: `users` (system auth collection: `_pb_users_auth_`)
-- **Max select**: 1
-- **Required**: Yes ✓
-- **Cascade delete**: Yes ✓
-- **Display fields**: username, email
-- **Description**: User who receives this notification
+### 1. user (Relation)
+- **Type:** Relation
+- **Collection:** users
+- **Required:** Yes
+- **Max Select:** 1
+- **Cascade Delete:** Yes
+- **Description:** User who will receive the notification
 
-### 2. `type` (Select) - REQUIRED
-- **Type**: Select (single)
-- **Required**: Yes ✓
-- **Options** (add these exact values):
-  - `connection_request`
-  - `connection_accepted`
-  - `new_message`
-  - `system`
-- **Description**: Type of notification
+### 2. type (Select)
+- **Type:** Select
+- **Required:** Yes
+- **Options:**
+  - `connection_request` - New connection request
+  - `connection_accepted` - Connection request accepted
+  - `message` - New message received
+  - `opportunity` - New opportunity posted
+  - `opportunity_application` - Application status update
+  - `offer` - New offer available
+  - `offer_claimed` - Offer claimed successfully
+  - `system` - System notification
+  - `admin` - Admin notification
 
-### 3. `message` (Text) - REQUIRED
-- **Type**: Text (Plain text)
-- **Required**: Yes ✓
-- **Min length**: 1
-- **Max length**: 500
-- **Description**: Notification message text
+### 3. message (Text)
+- **Type:** Text
+- **Required:** Yes
+- **Description:** Notification message content
 
-### 4. `related_id` (Text) - OPTIONAL
-- **Type**: Text (Plain text)
-- **Required**: No
-- **Description**: ID of related record (connection ID, message ID, etc.)
-- **Note**: Not a relation field to allow flexibility for different entity types
+### 4. related_id (Text)
+- **Type:** Text
+- **Required:** No
+- **Description:** ID of the related record (connection, message, opportunity, etc.)
 
-### 5. `is_read` (Bool) - OPTIONAL
-- **Type**: Bool
-- **Required**: No
-- **Default value**: `false`
-- **Description**: Whether notification has been read
+### 5. is_read (Bool)
+- **Type:** Bool
+- **Required:** No
+- **Default:** false
+- **Description:** Whether the notification has been read
 
----
+### 6. created (Date)
+- **Type:** Date
+- **System Field:** Yes
+- **Description:** When the notification was created
 
 ## Indexes
 
-Create an index for fast unread notification queries:
-- **Fields**: `user` + `is_read` + `created`
-- **Purpose**: Optimize queries for unread notifications by user
+Create the following indexes:
 
----
+1. **User Index**
+   - Fields: `user`
+   - Type: Normal
+   - Purpose: Fast lookup of notifications by user
+
+2. **Read Status Index**
+   - Fields: `user`, `is_read`
+   - Type: Normal
+   - Purpose: Fast lookup of unread notifications
+
+3. **Type Index**
+   - Fields: `type`
+   - Type: Normal
+   - Purpose: Filter notifications by type
 
 ## API Rules
 
-### List/Search Rule
+### List Rule
+```javascript
+user = @request.auth.id
 ```
-@request.auth.id != "" && user = @request.auth.id
-```
-**Meaning**: Users can only see their own notifications
+Users can only view their own notifications.
 
 ### View Rule
+```javascript
+user = @request.auth.id
 ```
-@request.auth.id != "" && user = @request.auth.id
-```
-**Meaning**: Users can only view their own notifications
+Users can only view their own notifications.
 
 ### Create Rule
+```javascript
+@request.auth.id != ""
 ```
-(Leave empty)
-```
-**Meaning**: Only backend/server can create notifications (via service functions)
+Only authenticated users can create notifications (typically system/admin creates).
 
 ### Update Rule
+```javascript
+user = @request.auth.id
 ```
-@request.auth.id != "" && user = @request.auth.id
-```
-**Meaning**: Users can only update their own notifications (for marking as read)
+Users can only update their own notifications (typically to mark as read).
 
 ### Delete Rule
+```javascript
+user = @request.auth.id
 ```
-@request.auth.id != "" && user = @request.auth.id
-```
-**Meaning**: Users can only delete their own notifications
+Users can only delete their own notifications.
 
----
+## Setup Steps
 
-## Step-by-Step Creation
-
-1. **Open PocketBase Admin**
-   - Local: http://127.0.0.1:8091/_/
-   - Production: Your production PocketBase admin URL
-
-2. **Create Collection**
-   - Go to Collections → Click "New Collection"
+1. **Create Collection**
+   - Go to PocketBase Admin → Collections → New Collection
    - Name: `notifications`
    - Type: Base Collection
-   - Click "Create"
 
-3. **Add Fields** (in order):
-   - Add `user` field (Relation → users)
-   - Add `type` field (Select → add 4 options)
-   - Add `message` field (Text)
-   - Add `related_id` field (Text)
-   - Add `is_read` field (Bool, default: false)
+2. **Add Fields**
+   - Add all fields listed above
+   - Set required fields
+   - Set default values
 
-4. **Set Default Value**
-   - For `is_read` field: Set default to `false`
+3. **Create Indexes**
+   - Create all indexes listed above
 
-5. **Create Index**
-   - Go to Indexes tab
-   - Add index on: `user`, `is_read`, `created`
+4. **Configure API Rules**
+   - Set all API rules as specified
 
-6. **Set API Rules**
-   - Go to API Rules tab
-   - Set all rules as specified above
+5. **Test**
+   - Create a test notification
+   - Verify API access
+   - Test read/unread functionality
 
----
+## Usage Examples
 
-## Verification
+### Creating a Notification
 
-After creating the collection, verify:
-- [ ] All 5 fields are created correctly
-- [ ] `user` field is a relation to `users` collection
-- [ ] `type` field has all 4 select options
-- [ ] `is_read` has default value `false`
-- [ ] Index is created on `user` + `is_read` + `created`
-- [ ] API rules are set correctly
-- [ ] Create rule is empty (no one can create via API directly)
-
----
-
-## JSON Schema (for reference)
-
-```json
+```javascript
+// Connection request notification
 {
-  "id": "notifications_collection",
-  "name": "notifications",
-  "type": "base",
-  "system": false,
-  "schema": [
-    {
-      "id": "user_field",
-      "name": "user",
-      "type": "relation",
-      "system": false,
-      "required": true,
-      "options": {
-        "collectionId": "_pb_users_auth_",
-        "cascadeDelete": true,
-        "minSelect": null,
-        "maxSelect": 1,
-        "displayFields": ["username", "email"]
-      }
-    },
-    {
-      "id": "type_field",
-      "name": "type",
-      "type": "select",
-      "system": false,
-      "required": true,
-      "options": {
-        "maxSelect": 1,
-        "values": [
-          "connection_request",
-          "connection_accepted",
-          "new_message",
-          "system"
-        ]
-      }
-    },
-    {
-      "id": "message_field",
-      "name": "message",
-      "type": "text",
-      "system": false,
-      "required": true,
-      "options": {
-        "min": 1,
-        "max": 500
-      }
-    },
-    {
-      "id": "related_id_field",
-      "name": "related_id",
-      "type": "text",
-      "system": false,
-      "required": false,
-      "options": {
-        "min": null,
-        "max": null
-      }
-    },
-    {
-      "id": "is_read_field",
-      "name": "is_read",
-      "type": "bool",
-      "system": false,
-      "required": false,
-      "options": {}
-    }
-  ],
-  "indexes": [
-    {
-      "fields": ["user", "is_read", "created"]
-    }
-  ],
-  "listRule": "@request.auth.id != \"\" && user = @request.auth.id",
-  "viewRule": "@request.auth.id != \"\" && user = @request.auth.id",
-  "createRule": "",
-  "updateRule": "@request.auth.id != \"\" && user = @request.auth.id",
-  "deleteRule": "@request.auth.id != \"\" && user = @request.auth.id"
+  user: "user_id",
+  type: "connection_request",
+  message: "John Doe sent you a connection request",
+  related_id: "connection_id",
+  is_read: false
+}
+
+// Message notification
+{
+  user: "user_id",
+  type: "message",
+  message: "You have a new message from Jane Smith",
+  related_id: "message_id",
+  is_read: false
+}
+
+// Opportunity application update
+{
+  user: "user_id",
+  type: "opportunity_application",
+  message: "Your application for 'Web Development Project' has been accepted",
+  related_id: "application_id",
+  is_read: false
 }
 ```
 
----
+## Notification Types Reference
 
-## Current Status
+- **connection_request:** User receives a connection request
+- **connection_accepted:** User's connection request was accepted
+- **message:** User receives a new message
+- **opportunity:** New opportunity posted (if user has preferences)
+- **opportunity_application:** Application status changed
+- **offer:** New offer available (if user has preferences)
+- **offer_claimed:** User successfully claimed an offer
+- **system:** General system notification
+- **admin:** Admin notification
 
-### ✅ Works Without Collection
-- Notification dropdown shows connection requests
-- Notification dropdown shows unread messages
-- Badge counts display correctly
-- Auto-refresh works
+## Best Practices
 
-### ⚠️ Needs Collection
-- `notificationService.markAsRead()` - Will fail without collection
-- `notificationService.markAllAsRead()` - Will fail without collection
-- `notificationService.delete()` - Will fail without collection
-- `notificationService.getAll()` - Will fail without collection
-- "Mark all read" button in dropdown - Currently not functional
+1. **Batch Notifications:** Group similar notifications when possible
+2. **Clear Messages:** Use clear, actionable notification messages
+3. **Cleanup:** Implement cleanup for old read notifications
+4. **Rate Limiting:** Implement rate limiting for notification creation
+5. **User Preferences:** Allow users to configure notification preferences
 
----
-
-## Next Steps After Creation
-
-1. **Enable Notification Creation**
-   - Uncomment TODO lines in `connectionService.ts` (lines 70-76, 113-119)
-   - Uncomment TODO lines in `messageService.ts` (lines 49-55)
-   - This will create notifications when connections/messages are created
-
-2. **Implement "Mark All Read"**
-   - Update `NotificationsDropdown.tsx` `handleClearAll()` function
-   - Call `notificationService.markAllAsRead()`
-
-3. **Test**
-   - Send a connection request → Check if notification is created
-   - Send a message → Check if notification is created
-   - Mark notification as read → Verify it updates
-
----
-
-## Summary
-
-**YES, you need to create the `notifications` collection** for full notification system functionality. The current UI works by pulling from connections/messages, but the service layer expects this collection to exist for advanced features like marking as read, deleting, and storing notification history.

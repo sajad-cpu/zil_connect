@@ -65,25 +65,25 @@ export default function Events() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-3 mb-3">
-            <Calendar className="w-10 h-10" />
-            <h1 className="text-4xl font-bold">Virtual Events & Trade Fairs</h1>
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-6 sm:py-8 md:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <Calendar className="w-8 h-8 sm:w-10 sm:h-10" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Virtual Events & Trade Fairs</h1>
           </div>
-          <p className="text-xl text-white/90">Connect, learn, and grow with industry-specific events</p>
+          <p className="text-base sm:text-lg md:text-xl text-white/90">Connect, learn, and grow with industry-specific events</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Filters */}
-        <Card className="mb-8 border-none shadow-lg">
-          <CardContent className="p-6">
+        <Card className="mb-6 sm:mb-8 border-none shadow-lg">
+          <CardContent className="p-4 sm:p-6">
             <Tabs value={statusFilter} onValueChange={setStatusFilter}>
               <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3">
-                <TabsTrigger value="Upcoming">Upcoming</TabsTrigger>
-                <TabsTrigger value="Live">Live Now</TabsTrigger>
-                <TabsTrigger value="Completed">Past Events</TabsTrigger>
+                <TabsTrigger value="Upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
+                <TabsTrigger value="Live" className="text-xs sm:text-sm">Live Now</TabsTrigger>
+                <TabsTrigger value="Completed" className="text-xs sm:text-sm">Past Events</TabsTrigger>
               </TabsList>
             </Tabs>
           </CardContent>
@@ -91,13 +91,13 @@ export default function Events() {
 
         {/* Events Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <EventCardSkeleton count={4} />
           </div>
         ) : filteredEvents.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <Card className="text-center py-10 sm:py-12">
+            <CardContent className="p-4 sm:p-6">
+              <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No {statusFilter.toLowerCase()} events</h3>
               <p className="text-gray-600">Check back soon for new events!</p>
             </CardContent>

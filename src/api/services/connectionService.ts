@@ -115,12 +115,16 @@ export const connectionService = {
 
       console.log('Connection request accepted:', connectionId);
 
-      await notificationService.create({
-        user: connection.user_from,
-        type: 'connection_accepted',
-        message: 'Your connection request was accepted',
-        related_id: connectionId
-      });
+      try {
+        await notificationService.create({
+          user: connection.user_from,
+          type: 'connection_accepted',
+          message: 'Your connection request was accepted',
+          related_id: connectionId
+        });
+      } catch (notifError: any) {
+        console.error('Failed to create notification for connection acceptance:', notifError);
+      }
 
       return updated;
     } catch (error: any) {
